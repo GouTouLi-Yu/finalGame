@@ -1,0 +1,44 @@
+import { _decorator, Component } from 'cc';
+import { ConfigReader } from './frame/Data/ConfigReader';
+import './game/core/mvc/view/mainMenu/MainMenuMediator';
+import { UIManager } from './game/ui/UIManager';
+const { ccclass, property } = _decorator;
+
+@ccclass('Main')
+export class Main extends Component {
+
+    onLoad(): void {
+        UIManager.init();
+    }
+
+    start() {
+        this.startLoadConfig();
+    }
+
+    async startLoadConfig() {
+        console.log('[Main] 开始加载配置表...');
+        await ConfigReader.init((finished, total) => {
+            const p = total > 0 ? (finished / total) : 0;
+            // 这里之后可以接你们的进度条 UI
+            console.log(`[Main] 配置表加载进度: ${(p * 100).toFixed(1)}% (${finished}/${total})`);
+        });
+        console.log('[Main] 配置表加载完成');
+        // 须在 init/loadAll 完成后再读表（进度回调里 _tables 尚未填充）
+        this.test();
+
+        // 界面 id 必须以 View 结尾；对应 MainMenuMediator（见 MainMenuMediator 文件内 ClassConfig.addClass）
+        await UIManager.gotoView('MainMenuView');
+    }
+
+
+    test() {
+        const data = ConfigReader.getDataTable('test');
+        console.log('[Main] 测试数据:', data);
+    }
+
+    update(deltaTime: number) {
+
+    }
+}
+
+

@@ -1,0 +1,32 @@
+/** 事件号生成（对齐 k 项目 EventType.eventTypeFromString 的思路） */
+class EventTypeUtil {
+    private static _n = 10000;
+    private static readonly _used = new Set<string>();
+
+    static id(name: string): number {
+        if (this._used.has(name)) {
+            throw new Error(`[PCEventType] repeated: ${name}`);
+        }
+        this._used.add(name);
+        return ++this._n;
+    }
+}
+
+/** 数值与 k 无关，仅保证进程内唯一；业务按常量名使用即可 */
+export const PCEventType = {
+    EVT_PUSH_VIEW: EventTypeUtil.id('EVT_PUSH_VIEW'),
+    EVT_SWITCH_VIEW: EventTypeUtil.id('EVT_SWITCH_VIEW'),
+    EVT_POPUP_VIEW: EventTypeUtil.id('EVT_POPUP_VIEW'),
+    EVT_UP_VIEW: EventTypeUtil.id('EVT_UP_VIEW'),
+
+    EVT_CLOSE_POPUP: EventTypeUtil.id('EVT_CLOSE_POPUP'),
+    EVT_DISMISS_VIEW: EventTypeUtil.id('EVT_DISMISS_VIEW'),
+
+    EVT_WILL_OPEN_VIEW: EventTypeUtil.id('EVT_WILL_OPEN_VIEW'),
+    EVT_DID_OPEN_VIEW: EventTypeUtil.id('EVT_DID_OPEN_VIEW'),
+    EVT_WILL_CLOSE_VIEW: EventTypeUtil.id('EVT_WILL_CLOSE_VIEW'),
+    EVT_DID_CLOSE_VIEW: EventTypeUtil.id('EVT_DID_CLOSE_VIEW'),
+
+    EVT_SCENE_ADD_MASKLAYER: EventTypeUtil.id('EVT_SCENE_ADD_MASKLAYER'),
+    EVT_SCENE_DEL_MASKLAYER: EventTypeUtil.id('EVT_SCENE_DEL_MASKLAYER'),
+};

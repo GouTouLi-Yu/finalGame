@@ -1,0 +1,7 @@
+# 仅跟踪 assets/scripts；仓库其余路径一律忽略
+*
+!.gitignore
+!assets/
+assets/*
+!assets/scripts/
+!assets/scripts/**
