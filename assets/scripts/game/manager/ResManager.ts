@@ -163,6 +163,14 @@ export class ResManager {
      * 释放通过 ResManager.loadAsset() 动态加载的资源引用
      * - 同一个 (bundleType,path) 被多次 loadAsset，会累计 refs，需要对应次数 releaseAsset 才会真正释放
      */
+    /**
+     * 与 loadAsset(path, type) 使用相同的路径归一化规则释放引用（避免 key 与缓存不一致）
+     */
+    static releaseLoadedAsset(bundleType: EBundleType, rawPath: string, assetType?: any) {
+        const normalizedPath = this._normalizePath(rawPath, assetType);
+        return this.releaseAsset(bundleType, normalizedPath);
+    }
+
     static releaseAsset(bundleType: EBundleType, path: string) {
         const key = this._assetKey(bundleType, path);
         const rec = this._assetCache.get(key);

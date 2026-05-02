@@ -1,4 +1,5 @@
 import { _decorator, Component } from 'cc';
+import './engine/Extension/NodeExt';
 import { ConfigReader } from './frame/Data/ConfigReader';
 import './game/core/mvc/view/mainMenu/MainMenuMediator';
 import { UIManager } from './game/ui/UIManager';
