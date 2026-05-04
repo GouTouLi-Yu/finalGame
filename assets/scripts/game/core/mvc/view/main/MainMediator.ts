@@ -7,10 +7,12 @@ export class MainMediator extends AreaViewMediator {
     }
 
     public onRegister(): void {
-
+        super.onRegister();
+        this.registerUI();
     }
 
     registerUI(): void {
+
     }
 
     public enterWithData(_data?: any): void {

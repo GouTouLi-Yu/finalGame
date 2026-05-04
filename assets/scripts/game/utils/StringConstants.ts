@@ -4,6 +4,9 @@
  */
 
 export let StringConstants = {
+    /** 弹窗点遮罩关闭时的底部提示（对齐 k：点击任意区域关闭） */
+    TEXT_POPUP_CLICK_MASK_TO_CLOSE: "点击任意区域可关闭当前界面",
+
     // 主菜单
     TEXT_MAIN_MENU_001: "新游戏",
     TEXT_MAIN_MENU_002: "继续游戏",
