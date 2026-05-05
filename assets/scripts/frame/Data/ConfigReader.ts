@@ -97,5 +97,9 @@ export class ConfigReader {
         this._assets = [];
         this._tables.clear();
     }
+
+    static getValue(key: string): any {
+        return this.getDataByIdAndKey("ConfigValue", key, "content");
+    }
 }
 

@@ -3,6 +3,7 @@ import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
 import { UIManager } from '../../../../ui/UIManager';
 import Strings from '../../../../utils/Strings';
 import { AreaViewMediator } from '../../../view/AreaViewMediator';
+import { ElementComponent } from '../../model/element/ElementComponent';
 
 enum BtnType {
     startGame,
@@ -36,6 +37,11 @@ export class MainMenuMediator extends AreaViewMediator {
 
     public setupView(_data?: any): void {
         this.setBtnNodes();
+        this.test();
+    }
+
+    test() {
+        let Component = new ElementComponent();
     }
 
     setBtnNodes() {

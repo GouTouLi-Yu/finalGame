@@ -67,5 +67,23 @@ export class HpComponent implements IComponent {
         this._currentHp = this._maxHp * Math.min(Math.max(hpRecoverPercentage, 0), 1);
         this._isAlive = true;
     }
+
+    serialize(): any {
+        /*return {
+            maxHp: this._maxHp,
+            currentHp: this._currentHp,
+            isAlive: this._isAlive,
+        };*/
+        return null;
+    }
+
+    deserialize(): any {
+        /*return {
+            maxHp: this._maxHp,
+            currentHp: this._currentHp,
+            isAlive: this._isAlive,
+        };*/
+        return null;
+    }
 }
 ClassConfig.addClass("HpComponent", HpComponent);
