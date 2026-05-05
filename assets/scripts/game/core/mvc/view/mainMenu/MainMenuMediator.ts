@@ -1,9 +1,9 @@
-import { Node } from 'cc';
+import { Button, Node } from 'cc';
 import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
-import { UIManager } from '../../../../ui/UIManager';
+import { SaveGameService } from '../../../../manager/SaveGameService';
 import Strings from '../../../../utils/Strings';
 import { AreaViewMediator } from '../../../view/AreaViewMediator';
-import { ElementComponent } from '../../model/element/ElementComponent';
+import { MainMenuFacade } from '../../facade/mainMenu/MainMenuFacade';
 
 enum BtnType {
     startGame,
@@ -37,25 +37,43 @@ export class MainMenuMediator extends AreaViewMediator {
 
     public setupView(_data?: any): void {
         this.setBtnNodes();
-        this.test();
-    }
-
-    test() {
-        let Component = new ElementComponent();
     }
 
     setBtnNodes() {
-        let btnTempNode = this.view.getChildByName("btnTemp");
-        let viewNames = ["MainView", "MainView", "MainView", "MainView", "MainView"];
+        const btnTempNode = this.view.getChildByName("btnTemp");
+        const btnOrder = [
+            BtnType.startGame,
+            BtnType.continueGame,
+            BtnType.cultivation,
+            BtnType.settings,
+            BtnType.exitGame,
+        ];
         for (let i = 0; i < this._btnNum; i++) {
-            let btnNode = btnTempNode.clone();
+            const kind = btnOrder[i];
+            const btnNode = btnTempNode.clone();
             btnNode.setParent(this._layoutNode);
             btnNode.active = true;
-            btnNode.setName(`btn_${BtnType[i]}`);
+            btnNode.setName(`btn_${BtnType[kind]}`);
             btnNode.getChildByName("Label").setString(Strings.get(`TEXT_MAIN_MENU_00${i + 1}`));
+
+            const button = btnNode.getComponent(Button);
+            if (button && kind === BtnType.continueGame) {
+                button.interactable = SaveGameService.hasSave();
+            }
+
             if (!btnNode.click) {
                 btnNode.addClickListener(() => {
-                    UIManager.gotoView("MainView");
+                    const facade = MainMenuFacade.getInstance();
+                    switch (kind) {
+                        case BtnType.startGame:
+                            facade.opStartNewGame();
+                            break;
+                        case BtnType.continueGame:
+                            facade.opStartContinue();
+                            break;
+                        default:
+                            break;
+                    }
                 });
                 btnNode.click = true;
             }

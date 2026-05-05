@@ -1,6 +1,7 @@
 import { _decorator, Component } from 'cc';
 import './engine/Extension/NodeExt';
 import { ConfigReader } from './frame/Data/ConfigReader';
+import './game/core/mvc/facade/mainMenu/MainMenuFacade';
 import './game/core/mvc/view/mainMenu/MainMenuMediator';
 import { UIManager } from './game/ui/UIManager';
 const { ccclass, property } = _decorator;
@@ -26,8 +27,13 @@ export class Main extends Component {
         console.log('[Main] 配置表加载完成');
         // 须在 init/loadAll 完成后再读表（进度回调里 _tables 尚未填充）
 
+        // 进主菜单前同步默认内存状态；选「继续」时再由 Facade 用存档覆盖
         // 界面 id 必须以 View 结尾；对应 MainMenuMediator（见 MainMenuMediator 文件内 ClassConfig.addClass）
-        await UIManager.gotoView('MainMenuView');
+        await this.startGame();
+    }
+
+    startGame() {
+        UIManager.gotoView('MainMenuView');
     }
 
     update(deltaTime: number) {

@@ -15,8 +15,7 @@ export enum EComponentType {
 
 export interface IComponent {
     type: EComponentType;
-    serialize(): any;
-    deserialize(): any;
+
 }
 
 
