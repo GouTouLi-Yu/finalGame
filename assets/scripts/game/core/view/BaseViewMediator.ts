@@ -8,9 +8,9 @@ export class BaseViewMediator extends Mediator {
     public static MediatorType: EMediatorType = EMediatorType.BaseView;
 
     /**
-     * 相对 `game/core/mvc/view/` 的子路径（不含文件名），用于默认预制体目录。
-     * 例如 `shop/gift` → `prefab/shop/gift/GiftLayer`。
-     * 不设时默认为单层：类名去掉 Mediator 后的名字（MainMenuMediator → MainMenu）。
+     * 相对 `game/core/mvc/view/` 的子路径（不含文件名）。
+     * 仅当对应 Mediator **未**设置 `Mediator.fullPath` 时参与默认资源路径：`prefab/{mvcViewSubPath}/{Base}Layer`。
+     * 不设时目录默认为类名去 Mediator 后首字母小写（MainMenuMediator → mainMenu）。
      */
     public static mvcViewSubPath = '';
 

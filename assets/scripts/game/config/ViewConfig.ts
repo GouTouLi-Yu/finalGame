@@ -3,10 +3,10 @@ import type { EBundleType } from '../manager/ResManager';
 /**
  * 仅当「默认规则找不到预制体」或路径/名字例外时，在此覆盖。
  *
- * 默认规则（无需注册）：
- * - Mediator：`XxxMediator` → 预制体 `XxxLayer`
- * - 路径：`ui` bundle 内 `prefab/{子路径}/XxxLayer`，子路径默认 = Xxx（与 mvc/view 下单层文件夹一致）
- * - 多级目录：在 Mediator 上设静态 `mvcViewSubPath = 'shop/gift'`
+ * 默认规则（无需在此注册）：
+ * - 界面 id `XxxView` → 预制体文件名 `XxxLayer`
+ * - 路径：`ui` bundle 内 `{Mediator.fullPath}/XxxLayer`；`fullPath` 例：`prefab/mainMenu`
+ * - `fullPath` 为空时回退：`prefab/{子路径}/XxxLayer`，子路径来自 `mvcViewSubPath` 或默认首字母小写目录
  *
  * 查找覆盖条目的 key（任一命中即可）：ClassConfig 注册名、`类名`、`XxxView`
  */

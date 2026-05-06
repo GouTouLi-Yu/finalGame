@@ -32,7 +32,7 @@ export const UI_POPUP_MASK_HINT_NODE_NAME = '__PopupMaskCloseHint';
 /**
  * UI 入口：
  * - gotoView **只接受字符串**，且必须以 **View** 结尾，例如 `MainMenuView`
- * - 对应 Mediator 注册名约定：`MainMenuView` → `MainMenuMediator`
+ * - 对应 Mediator：`MainMenuView` → `MainMenuMediator`；预制体路径 = `Mediator.fullPath` + `MainMenuLayer`（默认 ui bundle）
  *
  * 区域（area）打开策略对齐 k 项目思路：
  * - `viewType: 'switch'` 或 `ViewConfig.isMain`：替换 `__UIAreaLayer` 内已有界面（对应 k 的 EVT_SWITCH_VIEW / 主界面 switch）

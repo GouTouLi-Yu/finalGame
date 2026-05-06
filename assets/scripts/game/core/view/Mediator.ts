@@ -21,6 +21,11 @@ export enum EAreaViewOenType {
 export default class Mediator extends EventObject {
     public static MediatorType: EMediatorType = EMediatorType.BaseView;
     public static viewRes = '';
+    /**
+     * ui（或其它 bundle）内预制体所在目录前缀，不含文件名；末尾可有可无 `/`。
+     * 例：`prefab/mainMenu`。最终路径 = `{fullPath}/{stripViewSuffix(viewId)}Layer`（无扩展名）。
+     * 为空时由 ViewPathResolver 用 `mvcViewSubPath`（或默认首字母小写目录）回退为 `prefab/{子路径}/{Base}Layer`。
+     */
     public static fullPath = '';
     public static isEmptyLayer = false;
 

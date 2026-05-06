@@ -2,6 +2,8 @@ import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
 import { AreaViewMediator } from '../../../view/AreaViewMediator';
 
 export class MainMediator extends AreaViewMediator {
+    public static fullPath = 'prefab/main';
+
     public initialize(..._any: any[]): void {
 
     }

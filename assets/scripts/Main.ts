@@ -1,8 +1,10 @@
 import { _decorator, Component } from 'cc';
 import './engine/Extension/NodeExt';
 import { ConfigReader } from './frame/Data/ConfigReader';
+import { GameConfig } from './game/config/GameConfig';
 import './game/core/mvc/facade/mainMenu/MainMenuFacade';
 import './game/core/mvc/view/mainMenu/MainMenuMediator';
+import './game/core/mvc/view/test/TestMediator';
 import { UIManager } from './game/ui/UIManager';
 const { ccclass, property } = _decorator;
 
@@ -33,7 +35,11 @@ export class Main extends Component {
     }
 
     startGame() {
-        UIManager.gotoView('MainMenuView');
+        if (GameConfig.test) {
+            UIManager.gotoView('TestView');
+        } else {
+            UIManager.gotoView('MainMenuView');
+        }
     }
 
     update(deltaTime: number) {

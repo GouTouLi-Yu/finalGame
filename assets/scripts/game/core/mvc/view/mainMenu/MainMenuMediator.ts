@@ -14,6 +14,9 @@ enum BtnType {
 }
 
 export class MainMenuMediator extends AreaViewMediator {
+    /** ui bundle 内预制体目录（无文件名）；实际加载 `prefab/mainMenu/MainMenuLayer` */
+    public static fullPath = 'prefab/mainMenu';
+
     private _layoutNode: Node;
     private _btnNum = 5;
 
