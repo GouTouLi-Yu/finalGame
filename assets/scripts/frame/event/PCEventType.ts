@@ -29,4 +29,7 @@ export const PCEventType = {
 
     EVT_SCENE_ADD_MASKLAYER: EventTypeUtil.id('EVT_SCENE_ADD_MASKLAYER'),
     EVT_SCENE_DEL_MASKLAYER: EventTypeUtil.id('EVT_SCENE_DEL_MASKLAYER'),
+
+    /** 语言切换后派发，payload: { language: ELanguage } */
+    EVT_LANGUAGE_CHANGED: EventTypeUtil.id('EVT_LANGUAGE_CHANGED'),
 };

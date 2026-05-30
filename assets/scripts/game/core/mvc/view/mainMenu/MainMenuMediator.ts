@@ -84,4 +84,3 @@ export class MainMenuMediator extends AreaViewMediator {
     }
 }
 ClassConfig.addClass("MainMenuMediator", MainMenuMediator);
-

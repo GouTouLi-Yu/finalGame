@@ -1,4 +1,7 @@
 import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
+import { LanguageService } from '../../../../i18n/LanguageService';
+import { ELanguage } from '../../../../i18n/LanguageType';
+import Strings from '../../../../utils/Strings';
 import { AreaViewMediator } from '../../../view/AreaViewMediator';
 
 /**
@@ -23,12 +26,8 @@ export class TestMediator extends AreaViewMediator {
     }
 
     public setupView(_data?: any): void {
-
-        const obj = {
-            "speed": [80, 120],
-
-        };
-
+        LanguageService.setLanguage(ELanguage.CN);
+        console.log(Strings.get("TRANS_HERO_NAME_001"));
     }
 }
 

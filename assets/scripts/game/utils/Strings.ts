@@ -1,3 +1,4 @@
+import { LanguageService } from "../i18n/LanguageService";
 import { StringConstants } from "./StringConstants";
 
 type StringParam = Record<string, string | number | boolean | null | undefined>;
@@ -13,6 +14,12 @@ class Strings {
             return "";
         }
         const strId = id.toString();
+
+        const translateText = LanguageService.getTranslateText(strId);
+        if (translateText != null) {
+            return this.getFormatString(translateText, param);
+        }
+
         const content = (StringConstants as Record<string, string>)[strId];
         if (content == null || typeof content !== "string") {
             return "";
