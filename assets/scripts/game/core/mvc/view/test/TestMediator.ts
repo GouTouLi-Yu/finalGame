@@ -24,16 +24,10 @@ export class TestMediator extends AreaViewMediator {
 
     public setupView(_data?: any): void {
 
-        let obj = {
-            "element": {
-                point: {
-                    fire: {
-                        operator: "gte",
-                        value: "10",
-                    }
-                }
-            }
-        }
+        const obj = {
+            "speed": [80, 120],
+
+        };
 
     }
 }
