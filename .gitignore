@@ -10,6 +10,9 @@ native/
 # 编辑器个人配置（每台机器不同，不提交）
 profiles/
 
+# 本地资源目录（目录联接，各开发者自行配置，不提交）
+assets/res/
+
 # 依赖目录
 node_modules/
 
