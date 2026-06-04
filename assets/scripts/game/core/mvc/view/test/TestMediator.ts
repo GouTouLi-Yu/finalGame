@@ -28,6 +28,7 @@ export class TestMediator extends AreaViewMediator {
     public setupView(_data?: any): void {
         LanguageService.setLanguage(ELanguage.CN);
         console.log(Strings.get("TRANS_HERO_NAME_001"));
+        console.log("你好");
     }
 }
 
