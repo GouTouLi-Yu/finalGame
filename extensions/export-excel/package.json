@@ -1,0 +1,54 @@
+{
+  "name": "export-excel",
+  "version": "1.0.0",
+  "package_version": 2,
+  "description": "一键导表插件 - 将Excel文件转换为JSON数据",
+  "main": "./main.js",
+  "author": "",
+  "panels": {
+    "default": {
+      "title": "一键导表",
+      "main": "./panel.js",
+      "type": "dockable",
+      "size": {
+        "width": 600,
+        "height": 500
+      }
+    }
+  },
+  "contributions": {
+    "menu": [
+      {
+        "path": "扩展",
+        "label": "一键导表",
+        "message": "export-excel:open-panel"
+      }
+    ],
+    "messages": {
+      "export-excel:open-panel": {
+        "methods": [
+          "openPanel"
+        ]
+      },
+      "export-excel:get-config": {
+        "methods": [
+          "getConfig"
+        ]
+      },
+      "export-excel:set-config": {
+        "methods": [
+          "setConfig"
+        ]
+      },
+      "export-excel:export": {
+        "methods": [
+          "doExport"
+        ]
+      }
+    }
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}
+

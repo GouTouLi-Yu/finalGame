@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>战斗流程 · 单位回合与轮次</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117; --card: #1a1d27; --border: rgba(255,255,255,.08);
+      --text: #e6e8ef; --muted: #8b90a5; --accent: #6c9eff;
+      --player: #4ecdc4; --enemy: #ff6b6b; --round: #ffd166;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Noto Sans SC", sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    h1 { font-size: 1.4rem; color: var(--accent); margin-bottom: .25rem; }
+    .sub { color: var(--muted); font-size: .85rem; margin-bottom: 1rem; }
+
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: .6rem .75rem; margin-bottom: 1.25rem; position: sticky; top: 0; z-index: 10;
+    }
+    .toolbar label { font-size: .8rem; color: var(--muted); margin-right: .25rem; }
+    .toolbar button, .toolbar select {
+      font: inherit; font-size: .8rem; padding: .35rem .65rem;
+      border-radius: 6px; border: 1px solid var(--border);
+      background: #252836; color: var(--text); cursor: pointer;
+    }
+    .toolbar button:hover { border-color: var(--accent); }
+    .hint { font-size: .75rem; color: var(--muted); margin-left: auto; }
+
+    h2 { font-size: .95rem; margin: 1.25rem 0 .5rem; color: var(--muted); font-weight: 600; }
+    .shot-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: .85rem; margin-bottom: 1rem;
+    }
+    .shot-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: .65rem; gap: .5rem;
+    }
+    .shot-head span { font-size: .88rem; font-weight: 600; }
+    .shot-head button { font-size: .72rem; padding: .25rem .5rem; }
+
+    .scale-wrap { overflow: auto; transform-origin: top left; }
+    .mermaid { font-size: 13px !important; }
+    .mermaid svg { max-width: 100%; height: auto !important; }
+
+    /* 纯 CSS 一屏总览 — 最适合截图 */
+    .css-flow { display: flex; flex-direction: column; gap: .45rem; font-size: .82rem; }
+    .css-row { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+    .css-row.center { justify-content: center; }
+    .node {
+      padding: .4rem .55rem; border-radius: 6px; border: 1px solid var(--border);
+      background: #252836; text-align: center; max-width: 140px; line-height: 1.35;
+    }
+    .node.start { border-color: var(--accent); background: #1e2f4d; }
+    .node.player { border-color: var(--player); background: #1a3330; }
+    .node.enemy { border-color: var(--enemy); background: #3a2020; }
+    .node.round { border-color: #c084fc; background: #2d2240; }
+    .node.win { border-color: #7dde8a; background: #1a3320; }
+    .node.lose { border-color: #ff8787; background: #3a2020; }
+    .node.diamond { border-color: var(--round); background: #3a3520; max-width: 120px; }
+    .arr { color: var(--muted); font-size: .75rem; flex-shrink: 0; }
+    .terms { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; font-size: .82rem; margin-bottom: 1rem; }
+    .term { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .65rem .75rem; }
+    .term strong { color: var(--player); }
+    .rules { font-size: .82rem; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .75rem 1rem; margin-bottom: 1rem; }
+    .rules ol { margin-left: 1.1rem; }
+    .rules li { margin-bottom: .3rem; }
+    @media (max-width: 640px) { .terms { grid-template-columns: 1fr; } .hint { width: 100%; margin-left: 0; } }
+    @media print {
+      .toolbar { display: none; }
+      .shot-card { break-inside: avoid; page-break-inside: avoid; border-color: #ccc; }
+      body { background: #fff; color: #111; }
+      .node { border-color: #999; background: #f5f5f5; color: #111; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>战斗流程图</h1>
+    <p class="sub">已拆成多张小图 · 可缩放 · 可单张导出 PNG · 推荐先截「一屏总览」</p>
+
+    <div class="toolbar">
+      <label for="scale">缩放</label>
+      <select id="scale">
+        <option value="0.65">65%</option>
+        <option value="0.8">80%</option>
+        <option value="1" selected>100%</option>
+        <option value="1.2">120%</option>
+      </select>
+      <button type="button" onclick="window.print()">打印 / 存 PDF</button>
+      <span class="hint">每张图右上角「导出 PNG」可单独截图</span>
+    </div>
+
+    <div class="terms">
+      <div class="term"><strong>单位回合</strong>：任一角色或敌人按速度行动一次。</div>
+      <div class="term"><strong>轮次</strong>：我方 4 人各行动 1 次单位回合 = 1 轮次结束。</div>
+    </div>
+
+    <div class="rules">
+      <ol>
+        <li>全场首个我方单位回合：摸 5 张，魔力 = 5</li>
+        <li>同轮其余 3 人：各摸 2 张，不回魔力</li>
+        <li>轮次结束：魔力 = 5（不保留旧值）</li>
+        <li>敌全灭 → 胜；我全灭 → 败</li>
+      </ol>
+    </div>
+
+    <!-- ① 一屏 CSS 总览：最短，最适合截图 -->
+    <h2>① 一屏总览（推荐截图这张）</h2>
+    <div class="shot-card" id="card-overview">
+      <div class="shot-head">
+        <span>主循环 · 纯 HTML 不超一屏</span>
+        <button type="button" onclick="exportPng('card-overview')">导出 PNG</button>
+      </div>
+      <div class="scale-wrap chart-scale">
+        <div class="css-flow">
+          <div class="css-row center">
+            <div class="node start">战斗开始<br/>初始化行动条</div>
+          </div>
+          <div class="css-row center"><span class="arr">↓</span></div>
+          <div class="css-row center">
+            <div class="node">推进行动条<br/>下一单位回合</div>
+          </div>
+          <div class="css-row center"><span class="arr">↓</span></div>
+          <div class="css-row center">
+            <div class="node diamond">胜负判定</div>
+            <span class="arr">→ 敌全灭</span>
+            <div class="node win">胜利</div>
+            <span class="arr">→ 我全灭</span>
+            <div class="node lose">失败</div>
+          </div>
+          <div class="css-row center"><span class="arr">↓ 继续</span></div>
+          <div class="css-row center">
+            <div class="node enemy">敌人单位回合</div>
+            <span class="arr">或</span>
+            <div class="node player">我方单位回合</div>
+          </div>
+          <div class="css-row center"><span class="arr">↓ 回到推进行动条</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② 我方回合 -->
+    <h2>② 我方单位回合</h2>
+    <div class="shot-card" id="card-player">
+      <div class="shot-head">
+        <span>摸牌 &amp; 魔力</span>
+        <button type="button" onclick="exportPng('card-player')">导出 PNG</button>
+      </div>
+      <div class="scale-wrap chart-scale">
+        <pre class="mermaid">
+flowchart LR
+    A([我方单位回合]) --> B{全场首个?}
+    B -->|是| C[摸5 魔力=5]
+    B -->|否| D[摸2 魔力不变]
+    C --> E[出牌]
+    D --> E
+    E --> F([结束])
+        </pre>
+      </div>
+    </div>
+
+    <!-- ③ 轮次 -->
+    <h2>③ 轮次切换</h2>
+    <div class="shot-card" id="card-round">
+      <div class="shot-head">
+        <span>4 人行动完毕 → 新轮次</span>
+        <button type="button" onclick="exportPng('card-round')">导出 PNG</button>
+      </div>
+      <div class="scale-wrap chart-scale">
+        <pre class="mermaid">
+flowchart LR
+    A[角色1~4<br/>各行动1次] --> B{4人<br/>都动过?}
+    B -->|否| C[继续行动条]
+    B -->|是| D[轮次+1<br/>魔力=5<br/>不保留旧魔力]
+    D --> C
+        </pre>
+      </div>
+    </div>
+
+    <!-- ④ 主循环 mermaid 横向 -->
+    <h2>④ 战斗主循环（横向）</h2>
+    <div class="shot-card" id="card-loop">
+      <div class="shot-head">
+        <span>行动条循环</span>
+        <button type="button" onclick="exportPng('card-loop')">导出 PNG</button>
+      </div>
+      <div class="scale-wrap chart-scale">
+        <pre class="mermaid">
+flowchart LR
+    N[推进条] --> C{胜负?}
+    C -->|胜/败| END([结束])
+    C -->|继续| W{谁动?}
+    W -->|敌| E[敌人回合]
+    W -->|我| P[我方回合]
+    E --> N
+    P --> R{4人<br/>本轮动完?}
+    R -->|是| NR[新轮次 魔力=5]
+    R -->|否| N
+    NR --> N
+        </pre>
+      </div>
+    </div>
+
+    <!-- ⑤ 时间线 缩短 -->
+    <h2>⑤ 第 1 轮示例</h2>
+    <div class="shot-card" id="card-seq">
+      <div class="shot-head">
+        <span>交错行动示意</span>
+        <button type="button" onclick="exportPng('card-seq')">导出 PNG</button>
+      </div>
+      <div class="scale-wrap chart-scale">
+        <pre class="mermaid">
+%%{init: {'themeVariables': { 'fontSize': '12px'}}}%%
+sequenceDiagram
+    autonumber
+    participant S as 行动条
+    S->>S: 角色1 摸5 魔力5
+    S->>S: 敌人动
+    S->>S: 角色2~4 各摸2
+    Note over S: 轮次结束 魔力=5
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "dark",
+      flowchart: { curve: "linear", padding: 8, nodeSpacing: 20, rankSpacing: 30 },
+      sequence: { diagramMarginX: 8, diagramMarginY: 8, actorMargin: 30, width: 120 }
+    });
+
+    const scaleSel = document.getElementById("scale");
+    function applyScale() {
+      const s = scaleSel.value;
+      document.querySelectorAll(".chart-scale").forEach(el => {
+        el.style.transform = `scale(${s})`;
+        el.style.width = s < 1 ? `${100 / s}%` : "100%";
+      });
+    }
+    scaleSel.addEventListener("change", applyScale);
+
+    async function exportPng(id) {
+      const el = document.getElementById(id);
+      const btn = el.querySelector(".shot-head button");
+      const old = btn.textContent;
+      btn.textContent = "生成中…";
+      try {
+        const canvas = await html2canvas(el, {
+          backgroundColor: "#1a1d27",
+          scale: 2,
+          logging: false
+        });
+        const a = document.createElement("a");
+        a.download = id + ".png";
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+      } catch (e) {
+        alert("导出失败，请用 Win+Shift+S 截单张卡片区域");
+      }
+      btn.textContent = old;
+    }
+  </script>
+</body>
+</html>

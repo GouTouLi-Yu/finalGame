@@ -1,0 +1,52 @@
+{
+  "ConditionCompareConfig": {
+    "cmp_elem_1": {
+      "id": "cmp_elem_1",
+      "operator": "gte",
+      "value1": 6,
+      "value2": null
+    },
+    "cmp_elem_2": {
+      "id": "cmp_elem_2",
+      "operator": "gte",
+      "value1": 8,
+      "value2": null
+    },
+    "cmp_elem_3": {
+      "id": "cmp_elem_3",
+      "operator": "eq",
+      "value1": 10,
+      "value2": null
+    },
+    "cmp_elem_4": {
+      "id": "cmp_elem_4",
+      "operator": "lte",
+      "value1": 3,
+      "value2": null
+    },
+    "cmp_elem_5": {
+      "id": "cmp_elem_5",
+      "operator": "lte",
+      "value1": 2,
+      "value2": null
+    },
+    "cmp_elem_6": {
+      "id": "cmp_elem_6",
+      "operator": "eq",
+      "value1": 1,
+      "value2": null
+    },
+    "other_1": {
+      "id": "other_1",
+      "operator": "gte",
+      "value1": 10,
+      "value2": null
+    },
+    "attr_1": {
+      "id": "attr_1",
+      "operator": "eq",
+      "value1": 0,
+      "value2": null
+    }
+  }
+}

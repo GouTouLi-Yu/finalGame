@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>一键导表</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; padding: 16px; background: #f5f5f5; }
+    .container { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    h1 { font-size: 18px; margin-bottom: 12px; color: #222; }
+    .hint { color: #666; font-size: 12px; margin-bottom: 12px; line-height: 1.5; }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; color: #444; font-size: 12px; }
+    .input-group { display: flex; gap: 8px; }
+    input[type="text"] { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+    button { padding: 8px 12px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; transition: background 0.2s; }
+    .btn-primary { background: #1677ff; color: white; }
+    .btn-primary:hover { background: #3c8cff; }
+    .btn-primary:disabled { background: #d9d9d9; cursor: not-allowed; }
+    .btn-secondary { background: #f0f0f0; color: #222; }
+    .btn-secondary:hover { background: #e6e6e6; }
+    .result { margin-top: 12px; padding: 10px; border-radius: 4px; display: none; }
+    .result.active { display: block; }
+    .result.success { background: #f6ffed; border: 1px solid #b7eb8f; color: #237804; }
+    .result.error { background: #fff2f0; border: 1px solid #ffccc7; color: #a8071a; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .list { margin-top: 6px; max-height: 220px; overflow: auto; padding-left: 14px; }
+    .list li { margin: 2px 0; font-size: 12px; color: inherit; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>一键导表</h1>
+    <div class="hint">
+      Excel 默认路径：<span class="mono">D:\finalGame\reslgy\数据表\master\</span><br/>
+      导出目录：<span class="mono">assets/config/</span>
+    </div>
+
+    <div class="form-group">
+      <label>Excel 文件夹路径</label>
+      <div class="input-group">
+        <input type="text" id="excelPath" placeholder="请输入 Excel 文件所在目录路径">
+        <button class="btn-secondary" id="btnPick">选择</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <button class="btn-primary" id="exportBtn">一键导表</button>
+      <button class="btn-secondary" id="saveBtn" style="margin-left: 8px;">保存路径</button>
+    </div>
+
+    <div class="result" id="result">
+      <div id="resultTitle"></div>
+      <div id="resultContent"></div>
+    </div>
+  </div>
+
+  <script>
+    function showResult(ok, title, lines) {
+      const box = document.getElementById('result');
+      const t = document.getElementById('resultTitle');
+      const c = document.getElementById('resultContent');
+      box.className = ok ? 'result success active' : 'result error active';
+      t.textContent = title || '';
+      if (lines && lines.length) {
+        c.innerHTML = '<ul class="list">' + lines.map(x => '<li>' + String(x) + '</li>').join('') + '</ul>';
+      } else {
+        c.innerHTML = '';
+      }
+    }
+
+    function loadConfig() {
+      if (!window.Editor || !Editor.Ipc) return;
+      Editor.Ipc.sendToMain('export-excel:get-config', (err, config) => {
+        if (!err && config && config.excelLocation) {
+          const input = document.getElementById('excelPath');
+          if (input) input.value = config.excelLocation;
+        }
+      });
+    }
+
+    function saveConfig() {
+      const input = document.getElementById('excelPath');
+      const excelLocation = input ? input.value : '';
+      if (!window.Editor || !Editor.Ipc) return;
+      Editor.Ipc.sendToMain('export-excel:set-config', { excelLocation }, (err) => {
+        if (err) showResult(false, '保存失败', [err.message || String(err)]);
+        else showResult(true, '已保存路径', []);
+      });
+    }
+
+    async function pickFolder() {
+      if (!window.Editor || !Editor.Dialog) return;
+      try {
+        const ret = await Editor.Dialog.select({ type: 'directory', title: '选择Excel文件所在目录' });
+        if (ret && ret.filePaths && ret.filePaths.length) {
+          const input = document.getElementById('excelPath');
+          if (input) input.value = ret.filePaths[0];
+        }
+      } catch (e) {
+        showResult(false, '选择失败', [e.message || String(e)]);
+      }
+    }
+
+    function doExport() {
+      const btn = document.getElementById('exportBtn');
+      const input = document.getElementById('excelPath');
+      const excelLocation = input ? input.value : '';
+      if (!excelLocation) {
+        showResult(false, '请先填写 Excel 路径', []);
+        return;
+      }
+      if (!window.Editor || !Editor.Ipc) return;
+
+      btn.disabled = true;
+      showResult(true, '正在导表...', []);
+      Editor.Ipc.sendToMain('export-excel:export', { excelLocation }, (err, resp) => {
+        btn.disabled = false;
+        if (err) {
+          showResult(false, '导表失败', [err.message || String(err)]);
+          return;
+        }
+        if (resp && resp.success) {
+          showResult(true, resp.message || '导表成功', resp.files || []);
+        } else {
+          showResult(false, (resp && resp.message) || '导表失败', (resp && resp.errors) || []);
+        }
+      });
+    }
+
+    document.getElementById('btnPick').addEventListener('click', pickFolder);
+    document.getElementById('saveBtn').addEventListener('click', saveConfig);
+    document.getElementById('exportBtn').addEventListener('click', doExport);
+    loadConfig();
+  </script>
+</body>
+</html>
+

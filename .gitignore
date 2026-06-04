@@ -1,7 +1,18 @@
-# 仅跟踪 assets/scripts；仓库其余路径一律忽略
-*
-!.gitignore
-!assets/
-assets/*
-!assets/scripts/
-!assets/scripts/**
+# Cocos Creator 项目
+
+# 编辑器生成的缓存目录（不提交）
+library/
+temp/
+local/
+build/
+native/
+
+# 编辑器个人配置（每台机器不同，不提交）
+profiles/
+
+# 依赖目录
+node_modules/
+
+# 系统文件
+.DS_Store
+Thumbs.db

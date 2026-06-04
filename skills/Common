@@ -1,0 +1,3 @@
+### 代码通用编写规则
+1.不用tryCatch
+2.遍历json用of pairs

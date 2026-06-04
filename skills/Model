@@ -1,0 +1,5 @@
+### Model数据类创建规则
+1. 每个Model数据类基本都有一个对应的基元数据类，比如HeroModel对应Hero基元数据类、ElementModel对应Element基元数据类、TitleModel对应Title基元数据类等
+2. Model数据类需要实现getSaveData()、synchronize()、resetToDefault()方法，定义即可，我来实现对应的方法体
+3. 要填写ClassConfig.addClass("Model数据类名", Model数据类名), 基元数据类不用写这个
+4. 对应的基元数据类也要实现getSaveData()、synchronize()、resetToDefault()方法，定义即可，我来实现对应的方法体

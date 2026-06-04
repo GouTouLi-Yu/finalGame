@@ -1,0 +1,28 @@
+### Mediator界面创建规则
+1.不管是全屏界面还是弹窗界面，都要有以下的代码
+    public initialize(..._any: any[]): void {
+
+    }
+
+    public onRegister(): void {
+        super.onRegister();
+        this.registerUI();
+    }
+
+    registerUI(): void {
+
+    }
+
+    public enterWithData(_data?: any): void {
+        super.enterWithData(_data);
+        this.setupView();
+    }
+
+    public setupView(_data?: any): void {
+
+    }
+
+    // 在Mediator文件的最后添加以下代码
+    ClassConfig.addClass("MediatorName", MediatorName);
+
+2.

@@ -1,0 +1,24 @@
+{
+  "ElementTitle": {
+    "elem_title_1": {
+      "id": "elem_title_1",
+      "name": "",
+      "level": 1,
+      "require": {
+        "main": {
+          "fire": [
+            6,
+            10
+          ]
+        },
+        "other": {
+          "all": [
+            0,
+            3
+          ]
+        }
+      },
+      "effect": []
+    }
+  }
+}

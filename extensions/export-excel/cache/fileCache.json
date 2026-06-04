@@ -1,0 +1,133 @@
+{
+  "excelFiles": {
+    "D:\\finalGame\\reslgy\\数据表\\master\\test.xlsx": {
+      "mtime": 1777660754829,
+      "hash": "3445abdf8ff873bea309f54ec1b26688",
+      "tableName": "test"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\ElementTitleConfig.xlsx": {
+      "mtime": 1777935069223,
+      "hash": "a472694bee4fe7adbe37d74d73a16bf1",
+      "tableName": "ElementTitleConfig"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\ConditionCompareConfig.xlsx": {
+      "mtime": 1778089079001,
+      "hash": "5dc473bd84e891418a52c3a658cef446",
+      "tableName": "ConditionCompareConfig"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\ConditionConfig.xlsx": {
+      "mtime": 1778095113603,
+      "hash": "7e40c647be2f89d8d5a59bc06f9066f2",
+      "tableName": "ConditionConfig"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\ConfigValue.xlsx": {
+      "mtime": 1780128658994,
+      "hash": "eb6228007de089baac46537ddcbb3700",
+      "tableName": "ConfigValue"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\ElementConfig.xlsx": {
+      "mtime": 1777939242023,
+      "hash": "e6a5a9f59886370db8893a6d589a2c36",
+      "tableName": "ElementConfig"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\TitleConfig.xlsx": {
+      "mtime": 1778184262764,
+      "hash": "7e91099d428e92a9f405c3c2ebe4e812",
+      "tableName": "TitleConfig"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\EventConfig.xlsx": {
+      "mtime": 1779808861079,
+      "hash": "5f4ccd716ec212cab0fa6fcf0061e153",
+      "tableName": "EventConfig"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\HeroBase.xlsx": {
+      "mtime": 1780129332520,
+      "hash": "edaa02f55406079b81f06f097ae0b1a8",
+      "tableName": "HeroBase"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\Translate.xlsx": {
+      "mtime": 1780131759080,
+      "hash": "d49b8f677942383bdcc61894798c7783",
+      "tableName": "Translate"
+    }
+  },
+  "jsonFiles": {
+    "D:\\finalGame\\FinalGame\\assets\\data\\test.json": {
+      "mtime": 1777661044761,
+      "hash": "6b642c38d2d60603f538c457868e2a93",
+      "tableNames": [
+        "test"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\ElementTitle.json": {
+      "mtime": 1777910733893,
+      "hash": "c09fa8a0dea9c42d87dd8d658d007484",
+      "tableNames": [
+        "ElementTitle"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\ConditionCompareConfig.json": {
+      "mtime": 1778091287192,
+      "hash": "a64bb8f12d444190486c7cd8501da1a9",
+      "tableNames": [
+        "ConditionCompareConfig"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\ConditionConfig.json": {
+      "mtime": 1778095115593,
+      "hash": "1fc7035117d3d1354826ad5fa07fb5fd",
+      "tableNames": [
+        "ConditionConfig"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\ElementTitleConfig.json": {
+      "mtime": 1777938770449,
+      "hash": "9967847614c85db5b9b2e838c6dcfab0",
+      "tableNames": [
+        "ElementTitleConfig"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\ConfigValue.json": {
+      "mtime": 1780130001226,
+      "hash": "2c53a10dbb8ac64c9ece155950048c03",
+      "tableNames": [
+        "ConfigValue"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\ElementConfig.json": {
+      "mtime": 1777940445809,
+      "hash": "00cc16308a808b2625e0b04f7b6347b4",
+      "tableNames": [
+        "ElementConfig"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\TitleConfig.json": {
+      "mtime": 1780128077375,
+      "hash": "3009a3637093fcf5a6544ed378a3cf01",
+      "tableNames": [
+        "TitleConfig"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\EventConfig.json": {
+      "mtime": 1780128077371,
+      "hash": "d0f225d40e033b458666160025b1d849",
+      "tableNames": [
+        "EventConfig"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\HeroBase.json": {
+      "mtime": 1780130001227,
+      "hash": "d2d841f8691dbd5776f17506aaa17afd",
+      "tableNames": [
+        "HeroBase"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\Translate.json": {
+      "mtime": 1780131765636,
+      "hash": "eb7cc6d93d5148f5145ea77b42c5671c",
+      "tableNames": [
+        "Translate"
+      ]
+    }
+  }
+}

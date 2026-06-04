@@ -1,0 +1,14 @@
+{
+  "ElementTitleConfig": {
+    "elem_title_1": {
+      "id": "elem_title_1",
+      "name": "",
+      "level": 1,
+      "conditionId": "elem_1",
+      "effect": "effect1",
+      "preId": "",
+      "nextId": "",
+      "groupId": "single_fire"
+    }
+  }
+}
