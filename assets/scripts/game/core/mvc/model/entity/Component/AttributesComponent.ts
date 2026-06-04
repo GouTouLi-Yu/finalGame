@@ -1,5 +1,6 @@
 import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
-import { EComponentType, IComponent } from './ComponentType';
+import { EComponentType, IComponent } from '../ComponentType';
+
 
 
 export class AttributesComponent implements IComponent {
