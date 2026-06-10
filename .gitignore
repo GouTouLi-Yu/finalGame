@@ -13,6 +13,9 @@ profiles/
 # 本地资源目录（目录联接，各开发者自行配置，不提交）
 assets/res/
 
+# 配置表导出目录（由 Excel 插件本地生成，不提交）
+assets/config/
+
 # 依赖目录
 node_modules/
 
