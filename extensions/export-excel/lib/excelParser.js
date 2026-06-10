@@ -135,12 +135,52 @@ class ExcelParser {
     }
 
     /**
+     * 解析 A 列中的 start/end 标记，确定数据导出行范围（含边界行）。
+     * - A 列某行填写 start：从该行开始导出
+     * - A 列某行填写 end：到该行结束导出
+     * - 未填写 start：默认从第 4 行开始
+     * - 未填写 end：默认到最后一行
+     * - end 最小为第 4 行（标记在第 1~3 行时按第 4 行处理）
+     */
+    parseExportRange(sheet, maxRow, fileName, sheetName) {
+        let startRow = 4;
+        let endRow = maxRow;
+
+        for (let row = 1; row <= maxRow; row++) {
+            const value = this.getCellValue(sheet, row, 1);
+            if (value === null || value === undefined) continue;
+            const marker = String(value).trim().toLowerCase();
+            if (marker === 'start') {
+                startRow = row;
+            } else if (marker === 'end') {
+                endRow = row;
+            }
+        }
+
+        endRow = Math.max(4, endRow);
+
+        if (startRow > endRow) {
+            this.errorHandler.addError(
+                fileName,
+                sheetName,
+                startRow,
+                'A',
+                '',
+                `导出范围无效：start 在第 ${startRow} 行，end 在第 ${endRow} 行`
+            );
+            return null;
+        }
+
+        return { startRow, endRow };
+    }
+
+    /**
      * 解析单个Sheet
      * 约定：
      * - A1：表名
      * - 第2行：类型（从B列开始），支持 number | number[] | string | string[] | json | jsonArr | any
      * - 第3行：字段名（从B列开始），须包含 id 列
-     * - 第4行开始：数据行
+     * - 第4行开始：数据行（可通过 A 列 start/end 标记调整范围）
      * - 第1行中标记为 $$ 的列不导出
      */
     parseSheet(workbook, sheetName, fileName) {
@@ -201,8 +241,12 @@ class ExcelParser {
             if (fn) fieldNames[col] = String(fn).trim();
         }
 
+        const exportRange = this.parseExportRange(sheet, maxRow, fileName, sheetName);
+        if (!exportRange) return null;
+
+        const { startRow, endRow } = exportRange;
         const data = {};
-        for (let row = 4; row <= maxRow; row++) {
+        for (let row = startRow; row <= endRow; row++) {
             const idValue = this.getCellValue(sheet, row, idCol);
             if (!idValue || String(idValue).trim() === '') continue;
 
