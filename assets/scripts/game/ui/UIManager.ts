@@ -325,6 +325,43 @@ export class UIManager {
         return Injector.shared.getInstanceOnlyRead('MediatorMap') as MediatorMap;
     }
 
+    /** 指定界面是否已有实例挂在场景树上 */
+    static isViewOpen(viewId: string): boolean {
+        this.init();
+        const list = this.mediatorMap.getViewListByViewName(viewId);
+        return list != null && list.some((n) => n?.isValid);
+    }
+
+    /** 关闭指定界面的全部实例（popup 走 dismiss，area 由 dismiss + destroy 处理） */
+    static closeView(viewId: string): void {
+        this.init();
+        const list = this.mediatorMap.getViewListByViewName(viewId);
+        if (!list || list.length === 0) return;
+
+        for (const node of list.slice()) {
+            if (!node?.isValid) continue;
+            const med = (node as any).mediator;
+            if (med && typeof med.dismiss === 'function' && !med._dismissed) {
+                med.dismiss();
+            } else {
+                node.destroy();
+            }
+        }
+    }
+
+    /** 弹窗类界面开关：已打开则关闭，否则打开 */
+    static togglePopupView(viewId: string, data?: unknown, options?: IUIManagerGotoOptions): void {
+        if (this.isViewOpen(viewId)) {
+            this.closeView(viewId);
+            return;
+        }
+        void this.gotoView(viewId, data, options).then((node) => {
+            if (!node) {
+                console.warn(`[UIManager] 打开 ${viewId} 失败，请检查 ui bundle 中预制体路径与 Mediator.fullPath`);
+            }
+        });
+    }
+
     static get canvas(): Node | null {
         return this._canvas;
     }

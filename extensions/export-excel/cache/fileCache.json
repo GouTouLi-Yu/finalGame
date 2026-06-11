@@ -51,8 +51,8 @@
       "tableName": "Translate"
     },
     "D:\\finalGame\\reslgy\\data\\trunk\\CardConfig.xlsx": {
-      "mtime": 1781118312393,
-      "hash": "f80404716c6c6b74c2b0c137222c5992",
+      "mtime": 1781199393053,
+      "hash": "a965ae255cb6796f804aa345c8692876",
       "tableName": "CardConfig"
     },
     "D:\\finalGame\\reslgy\\data\\trunk\\TalentConfig.xlsx": {
@@ -61,14 +61,19 @@
       "tableName": "TalentConfig"
     },
     "D:\\finalGame\\reslgy\\data\\trunk\\ActionConfig.xlsx": {
-      "mtime": 1781117980180,
-      "hash": "b1c367c6528d3fb9cfc6db03d197f58e",
+      "mtime": 1781193404184,
+      "hash": "ca09f6cb91540bf7353a7de9f26d492f",
       "tableName": "ActionConfig"
     },
     "D:\\finalGame\\reslgy\\data\\trunk\\EffectConfig.xlsx": {
-      "mtime": 1781115764326,
-      "hash": "8cc5cca6cc6ffda169ac945256d3e4fa",
-      "tableName": "ActionConfig"
+      "mtime": 1781192928501,
+      "hash": "07e9c064ba831cec44e1f35c7b4aed22",
+      "tableName": "EffectConfig"
+    },
+    "D:\\finalGame\\reslgy\\data\\trunk\\GMConfig.xlsx": {
+      "mtime": 1781204676606,
+      "hash": "9b66fb7c43d767dc20338f5628193b31",
+      "tableName": "GMConfig"
     }
   },
   "jsonFiles": {
@@ -150,8 +155,8 @@
       ]
     },
     "D:\\finalGame\\FinalGame\\assets\\config\\CardConfig.json": {
-      "mtime": 1781111252688,
-      "hash": "89c7966a761f1810d675202f54faeb44",
+      "mtime": 1781204758107,
+      "hash": "f59880cd2c980bb6d3db9c166a4d5354",
       "tableNames": [
         "CardConfig"
       ]
@@ -161,6 +166,27 @@
       "hash": "3f513f7406bddd65edc4da4dfb8af15f",
       "tableNames": [
         "TalentConfig"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\ActionConfig.json": {
+      "mtime": 1781193407537,
+      "hash": "85c12d4c7c9043d58915270a6bb449aa",
+      "tableNames": [
+        "ActionConfig"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\EffectConfig.json": {
+      "mtime": 1781193407540,
+      "hash": "2ab0f00c6e334c91af58c69a34b508b4",
+      "tableNames": [
+        "EffectConfig"
+      ]
+    },
+    "D:\\finalGame\\FinalGame\\assets\\config\\GMConfig.json": {
+      "mtime": 1781204758108,
+      "hash": "c6e29469a7763f23d1aa798bb5b5c737",
+      "tableNames": [
+        "GMConfig"
       ]
     }
   }

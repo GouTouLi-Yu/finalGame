@@ -13,7 +13,24 @@ export interface IElementSaveData {
     elements: Record<string, IElementSaveDataItem>;
 }
 
+/** 道具背包存档 */
+export interface IItemSaveData {
+    items: string[];
+}
+
+/** 卡牌数据 */
+export interface ICardSaveDataItem {
+    level: number;
+}
+
+/** 卡牌Model数据 */
+export interface ICardSaveData {
+    cards: Map<string, ICardSaveDataItem>;
+}
+
 export interface PlayerSaveData {
     version: number;
-    elementModel?: IElementSaveData;
+    elementDatas?: IElementSaveData;
+    itemDatas?: IItemSaveData;
+    cardDatas?: ICardSaveData;
 }
