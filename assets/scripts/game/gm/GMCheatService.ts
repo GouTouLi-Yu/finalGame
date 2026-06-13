@@ -3,9 +3,9 @@ import { pairs } from '../../frame/luaCompat/pairs';
 import { DevConfig } from '../config/DevConfig';
 import { GMCheatActionRegistry } from './GMCheatActionRegistry';
 
-const GMCHEAT_TABLE = 'GMCheatConfig';
+const GM_TABLE = 'GMConfig';
 
-export interface IGMCheatConfigRow {
+export interface IGMConfigRow {
     id: string;
     description: string;
     action: string;
@@ -20,14 +20,14 @@ export class GMCheatService {
         return raw.trim().toLowerCase();
     }
 
-    private static getRowByInput(raw: string): IGMCheatConfigRow | null {
+    private static getRowByInput(raw: string): IGMConfigRow | null {
         const id = this.normalizeId(raw);
         if (!id) return null;
 
-        const row = ConfigReader.getDataById(GMCHEAT_TABLE, id);
+        const row = ConfigReader.getDataById(GM_TABLE, id);
         if (!row) return null;
 
-        return row as IGMCheatConfigRow;
+        return row as IGMConfigRow;
     }
 
     static has(raw: string): boolean {
@@ -60,16 +60,16 @@ export class GMCheatService {
     }
 
     static printHelp(): void {
-        const table = ConfigReader.getDataTable(GMCHEAT_TABLE);
+        const table = ConfigReader.getDataTable(GM_TABLE);
         if (!table) {
-            console.warn(`[GMCheatService] 未找到配置表 ${GMCHEAT_TABLE}`);
+            console.warn(`[GMCheatService] 未找到配置表 ${GM_TABLE}`);
             return;
         }
 
         const lines = ['[GM] 可用秘籍：'];
-        const rows: IGMCheatConfigRow[] = [];
+        const rows: IGMConfigRow[] = [];
         for (const [_id, row] of pairs(table)) {
-            rows.push(row as IGMCheatConfigRow);
+            rows.push(row as IGMConfigRow);
         }
         rows.sort((a, b) => String(a.id).localeCompare(String(b.id)));
 

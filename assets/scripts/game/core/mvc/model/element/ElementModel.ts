@@ -18,12 +18,7 @@ export class ElementModel extends Model {
     }
 
     private resetElementComponentMap() {
-        let elements = this._allElements;
-        for (let type of elements) {
-            let element = this._elementMap.get(type) ?? new Element(type);
-            element.resetToDefault();
-            this._elementMap.set(type, element);
-        }
+
     }
 
     getSaveData(): IElementSaveData {

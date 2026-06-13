@@ -19,4 +19,14 @@ export function initGMCheatActions(): void {
         SaveGameService.save();
         console.log(`[GM] 已发放冒险道具：新增卡牌 ${result.cards} 张`);
     });
+    /** 打印玩家全部数据（内存 + 即将写入存档的结构） */
+    GMCheatActionRegistry.register('printPlayerData', () => {
+        Player.instance.printPlayerData();
+    });
+    /** 清空玩家全部数据并重置存档 */
+    GMCheatActionRegistry.register('clearPlayerData', () => {
+        Player.instance.resetToDefault();
+        SaveGameService.save();
+        console.log('[GM] 已清空玩家数据');
+    });
 }

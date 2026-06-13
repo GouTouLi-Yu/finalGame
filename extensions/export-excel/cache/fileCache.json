@@ -61,8 +61,8 @@
       "tableName": "TalentConfig"
     },
     "D:\\finalGame\\reslgy\\data\\trunk\\ActionConfig.xlsx": {
-      "mtime": 1781193404184,
-      "hash": "ca09f6cb91540bf7353a7de9f26d492f",
+      "mtime": 1781205604827,
+      "hash": "7562de5262f4a127ec030578bab751a1",
       "tableName": "ActionConfig"
     },
     "D:\\finalGame\\reslgy\\data\\trunk\\EffectConfig.xlsx": {
@@ -71,8 +71,8 @@
       "tableName": "EffectConfig"
     },
     "D:\\finalGame\\reslgy\\data\\trunk\\GMConfig.xlsx": {
-      "mtime": 1781204676606,
-      "hash": "9b66fb7c43d767dc20338f5628193b31",
+      "mtime": 1781369829739,
+      "hash": "4db1d63485e8984f9ea7b646f5814b6c",
       "tableName": "GMConfig"
     }
   },
@@ -169,7 +169,7 @@
       ]
     },
     "D:\\finalGame\\FinalGame\\assets\\config\\ActionConfig.json": {
-      "mtime": 1781193407537,
+      "mtime": 1781369801569,
       "hash": "85c12d4c7c9043d58915270a6bb449aa",
       "tableNames": [
         "ActionConfig"
@@ -183,8 +183,8 @@
       ]
     },
     "D:\\finalGame\\FinalGame\\assets\\config\\GMConfig.json": {
-      "mtime": 1781204758108,
-      "hash": "c6e29469a7763f23d1aa798bb5b5c737",
+      "mtime": 1781369834529,
+      "hash": "64922252251396655ebef3b3929688e3",
       "tableNames": [
         "GMConfig"
       ]

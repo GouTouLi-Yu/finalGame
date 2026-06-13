@@ -53,8 +53,6 @@ export class Player extends Model {
     getSaveData(): PlayerSaveData {
         return {
             version: SAVE_VERSION,
-            elementDatas: this._elementModel.getSaveData(),
-            itemDatas: this._itemModel.getSaveData(),
             adventureDatas: this._adventureModel.getSaveData(),
         };
     }
@@ -66,7 +64,8 @@ export class Player extends Model {
     }
 
     printPlayerData(): void {
-        console.log("玩家数据 ===>", this.getSaveData());
+        const data = this.getSaveData();
+        console.log('[Player] 当前数据:\n' + JSON.stringify(data, null, 2));
     }
 
     /** 秘籍：发放局外全部道具（养成、解锁等） */
