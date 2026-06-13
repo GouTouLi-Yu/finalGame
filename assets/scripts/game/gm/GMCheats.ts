@@ -1,4 +1,5 @@
 import { Player } from '../core/mvc/model/Player/Player';
+import { SaveGameService } from '../manager/SaveGameService';
 import { GMCheatActionRegistry } from './GMCheatActionRegistry';
 import { GMCheatService } from './GMCheatService';
 
@@ -6,6 +7,16 @@ import { GMCheatService } from './GMCheatService';
 export function initGMCheatActions(): void {
     /** 打印秘籍 */
     GMCheatActionRegistry.register('printHelp', () => GMCheatService.printHelp());
-    /** 获取全部物品 */
-    GMCheatActionRegistry.register('grantAll', () => Player.instance.grantAll());
+    /** 局外：获取全部道具 */
+    GMCheatActionRegistry.register('grantAll_out', () => {
+        Player.instance.grantAllItems();
+        SaveGameService.save();
+        console.log('[GM] 已发放局外道具');
+    });
+    /** 局内：获取冒险全部道具（目前：CardConfig 全部卡牌） */
+    GMCheatActionRegistry.register('grantAll_in', () => {
+        const result = Player.instance.adventureModel.grantAllAdventureItems();
+        SaveGameService.save();
+        console.log(`[GM] 已发放冒险道具：新增卡牌 ${result.cards} 张`);
+    });
 }

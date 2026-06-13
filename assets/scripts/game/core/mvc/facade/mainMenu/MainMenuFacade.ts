@@ -24,5 +24,5 @@ export class MainMenuFacade extends Facade {
         GameManager.instance.enterGameplay();
     }
 }
-ClassConfig.addClass('MainMenuFacade', MainMenuFacade);
 
+ClassConfig.addClass('MainMenuFacade', MainMenuFacade);

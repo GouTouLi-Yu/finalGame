@@ -1,7 +1,7 @@
 /** 磁盘存档 JSON 对应的结构；变更时请递增 SAVE_VERSION 并做好迁移或兼容 */
 
 /** 与磁盘存档不兼容时由 {@link SaveGameService.load} 整份移除 */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 5;
 
 /** 元素组件数据 */
 export interface IElementSaveDataItem {
@@ -18,19 +18,20 @@ export interface IItemSaveData {
     items: string[];
 }
 
-/** 卡牌数据 */
-export interface ICardSaveDataItem {
+/** 冒险卡牌单条存档（对应 {@link AdventureCardModel}；id 为 CardConfig.id） */
+export interface IAdventureCardSaveData {
+    id: string;
     level: number;
 }
 
-/** 卡牌Model数据 */
-export interface ICardSaveData {
-    cards: Map<string, ICardSaveDataItem>;
+/** 冒险存档（各字段对应 AdventureModel 子模块） */
+export interface IAdventureSaveData {
+    adventureCards: IAdventureCardSaveData[];
 }
 
 export interface PlayerSaveData {
     version: number;
     elementDatas?: IElementSaveData;
     itemDatas?: IItemSaveData;
-    cardDatas?: ICardSaveData;
+    adventureDatas?: IAdventureSaveData;
 }
