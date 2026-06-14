@@ -5,6 +5,7 @@ import { DevConfig } from './game/config/DevConfig';
 import { GameConfig } from './game/config/GameConfig';
 import './game/core/mvc/facade/mainMenu/MainMenuFacade';
 import './game/core/mvc/model/adventure/AdventureModel';
+import './game/core/mvc/model/battle/BattleModel';
 import './game/core/mvc/model/item/ItemModel';
 import './game/core/mvc/view/mainMenu/MainMenuMediator';
 import './game/core/mvc/view/GM/GMMediator';
