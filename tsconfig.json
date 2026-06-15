@@ -2,6 +2,10 @@
   /* Base configuration. Do not edit this field. */
   "extends": "./temp/tsconfig.cocos.json",
 
+  "include": [
+    "assets/**/*.ts"
+  ],
+
   /* Add your custom configuration here. */
   "compilerOptions": {
     "lib": ["es2016", "dom"],

@@ -2,7 +2,7 @@ import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
 import { AreaViewMediator } from '../../../view/AreaViewMediator';
 import { MediatorHandleHelper } from '../../util/MediatorHandleHelper';
 
-enum BtnType {
+enum EBtnType {
     startGame,
     continueGame,
     cultivation,

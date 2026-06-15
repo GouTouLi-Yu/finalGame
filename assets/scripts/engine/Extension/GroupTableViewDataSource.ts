@@ -1,6 +1,6 @@
 import { Node, Size, UITransform, Vec2, Widget } from "cc";
 import "./NodeExt";
-import { ScrollViewDirection, TableViewData } from "./TableView";
+import { EScrollViewDirection, TableViewData } from "./TableView";
 import { TableViewCellNode, TableViewDataSource } from "./TableViewDataSource";
 
 export class GroupTableViewDataSource extends TableViewDataSource {
@@ -27,7 +27,7 @@ export class GroupTableViewDataSource extends TableViewDataSource {
 
     private _posFromIndex(index: number): Vec2 {
         let cellSize = this._getCellSizeFunc(0);
-        if (this._tableView.direction == ScrollViewDirection.VERTICAL) {
+        if (this._tableView.direction == EScrollViewDirection.VERTICAL) {
             return new Vec2(this._columnEdgeInterval + cellSize.width * index, 0);
         } else {
             return new Vec2(0, this._columnEdgeInterval + cellSize.height * (this._columnNum - index - 1));
@@ -200,7 +200,7 @@ export class GroupTableViewDataSource extends TableViewDataSource {
     _getCellGroupSize() {
         if (!this._fixedCellGroupSize) {
             var table = this._tableView;
-            if (this._data.direction == ScrollViewDirection.HORIZONTAL) {
+            if (this._data.direction == EScrollViewDirection.HORIZONTAL) {
                 let totalHeight = table.getViewSize().height;
                 let width = this._getCellSizeFunc(0).width;
                 this._fixedCellGroupSize = new Size(width, totalHeight);
@@ -223,7 +223,7 @@ export class GroupTableViewDataSource extends TableViewDataSource {
             } else {
                 let tableViewSize = this._tableView.getViewSize()
                 let cellSize = this._getCellFunc(index).getContentSize();
-                if (this.data.direction == ScrollViewDirection.HORIZONTAL) {
+                if (this.data.direction == EScrollViewDirection.HORIZONTAL) {
                     this._fixedCellSize = new Size(
                         cellSize.width,
                         Math.floor((tableViewSize.height - this._columnEdgeInterval * 2) / this._columnNum),

@@ -3,6 +3,7 @@ import { LanguageService } from '../../../../i18n/LanguageService';
 import { ELanguage } from '../../../../i18n/LanguageType';
 import Strings from '../../../../utils/Strings';
 import { AreaViewMediator } from '../../../view/AreaViewMediator';
+import { BattleUtil } from '../../util/BattleUtil';
 
 /**
  * 测试用区域界面 Mediator。
@@ -31,7 +32,16 @@ export class TestMediator extends AreaViewMediator {
         console.log("你好");
 
         // UIManager.gotoView("GameView");
+
+        console.log("跑道长度：" + BattleUtil.battleTrackLength);
+        console.log("初始手牌数量：" + BattleUtil.battleInitialHandSize);
+        console.log("角色每回合摸牌数量：" + BattleUtil.battleDrawPerUnitTurn);
+        console.log("轮次结束补牌数量：" + BattleUtil.battleRoundStartHandSize);
+        console.log("每回合重发的魔力点：" + BattleUtil.battleManaPerRound);
+        console.log("最大手牌数量：" + BattleUtil.maxCardNum);
     }
+
+
 }
 
 ClassConfig.addClass('TestMediator', TestMediator);

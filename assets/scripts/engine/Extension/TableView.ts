@@ -26,14 +26,14 @@ const { ccclass, property, menu } = _decorator;
  *      删除指定索引处的单元格 removeCellAtIndex
  */
 
-export enum VerticalFillOrder { TOP_DOWN = 0, BOTTOM_UP = 1 }
+export enum EVerticalFillOrder { TOP_DOWN = 0, BOTTOM_UP = 1 }
 
-export enum ScrollViewDirection {
+export enum EScrollViewDirection {
     HORIZONTAL = 1,
     VERTICAL = 2,
 }
 
-export enum TableViewOffSetType {
+export enum ETableViewOffSetType {
     none = "none",
     top = "top",
     bottom = "bottom",
@@ -64,9 +64,9 @@ export interface TableViewData {
     preventSwallow?: boolean
 
     /** tableView的滚动方向(默认竖向滚动) */
-    direction?: ScrollViewDirection
+    direction?: EScrollViewDirection
     /** 单元格垂直填充顺序(默认从上到下) */
-    fillOrder?: VerticalFillOrder
+    fillOrder?: EVerticalFillOrder
     /** 是否回弹(默认false) */
     bounceable?: boolean
     /** 设置一行多少个cell(设置对性能比较好, 仅支持相同的cell) */
@@ -127,12 +127,12 @@ export interface TableViewData {
 @menu("Extend/TableView")
 export default class TableView extends Component {
     @property({ serializable: true })
-    private _direction: ScrollViewDirection = ScrollViewDirection.VERTICAL;
-    @property({ type: Enum(ScrollViewDirection), tooltip: "HORIZONTAL水平 、VERTICAL垂直" })
+    private _direction: EScrollViewDirection = EScrollViewDirection.VERTICAL;
+    @property({ type: Enum(EScrollViewDirection), tooltip: "HORIZONTAL水平 、VERTICAL垂直" })
     get direction() {
         return this._direction;
     }
-    set direction(value: ScrollViewDirection) {
+    set direction(value: EScrollViewDirection) {
         if (this._direction == value) {
             return
         }
@@ -140,8 +140,8 @@ export default class TableView extends Component {
         this.updateDirection()
     }
 
-    @property({ type: Enum(VerticalFillOrder), tooltip: "单元格垂直填充顺序" })
-    private vordering: VerticalFillOrder = VerticalFillOrder.TOP_DOWN;
+    @property({ type: Enum(EVerticalFillOrder), tooltip: "单元格垂直填充顺序" })
+    private vordering: EVerticalFillOrder = EVerticalFillOrder.TOP_DOWN;
 
     @property({ type: CCInteger, tooltip: "第一个单元格和边框的间隔" })
     private starInterval: number = 0;
@@ -244,7 +244,7 @@ export default class TableView extends Component {
     private _isUsedCellsDirty: boolean = false;                             //使用的单元格是否进行排序
     private _isInit: boolean = false;
 
-    private _oldDirection: ScrollViewDirection = null
+    private _oldDirection: EScrollViewDirection = null
 
     private _viewSize: Size = new Size();
 
@@ -383,20 +383,20 @@ export default class TableView extends Component {
             return
         }
         var direction = this._direction;
-        if (direction == ScrollViewDirection.HORIZONTAL) {
+        if (direction == EScrollViewDirection.HORIZONTAL) {
             this.scrollView.horizontal = true;
             this.scrollView.vertical = false;
-        } else if (direction == ScrollViewDirection.VERTICAL) {
+        } else if (direction == EScrollViewDirection.VERTICAL) {
             this.scrollView.horizontal = false;
             this.scrollView.vertical = true;
         }
     }
 
-    public setDirection(direction: ScrollViewDirection) {
+    public setDirection(direction: EScrollViewDirection) {
         this.direction = direction;
     }
 
-    public getDirection(): ScrollViewDirection {
+    public getDirection(): EScrollViewDirection {
         return this.direction;
     }
 
@@ -414,7 +414,7 @@ export default class TableView extends Component {
     }
 
     //设置垂直填充顺序
-    public setVerticalFillOrder(fillOrder: VerticalFillOrder) {
+    public setVerticalFillOrder(fillOrder: EVerticalFillOrder) {
         if (this.vordering != fillOrder) {
             this.vordering = fillOrder;
             if (this._cellsUsed.length > 0) {
@@ -507,7 +507,7 @@ export default class TableView extends Component {
         let maxIdx = Math.max(countOfItems - 1, 0);
         let offset: Vec2 = this.getContentOffset();
         offset.x = -offset.x;
-        if (this.direction == ScrollViewDirection.VERTICAL && this.vordering == VerticalFillOrder.BOTTOM_UP) {
+        if (this.direction == EScrollViewDirection.VERTICAL && this.vordering == EVerticalFillOrder.BOTTOM_UP) {
             offset.y = this.getContainer().getContentSize().height - offset.y - this._viewSize.height;
         }
         startIdx = this._indexFromOffset(offset);
@@ -550,7 +550,7 @@ export default class TableView extends Component {
             let offset = this.scrollView.getScrollOffset();
             let curOffset = this._curPageOffset
             var offsetNum = 0
-            if (this._direction == ScrollViewDirection.HORIZONTAL) {
+            if (this._direction == EScrollViewDirection.HORIZONTAL) {
                 offsetNum = -offset.x - curOffset.x
             } else {
                 offsetNum = offset.y - curOffset.y
@@ -571,7 +571,7 @@ export default class TableView extends Component {
             const cell = this._cellsUsed[index];
             const cellOpacity = cell.getComponent(UIOpacity)
             const cellTransform = cell.getComponent(UITransform)
-            if (this.direction == ScrollViewDirection.VERTICAL) {
+            if (this.direction == EScrollViewDirection.VERTICAL) {
                 let displayPosY = cell.position.y + position.y
                 if (Math.abs(displayPosY) > parentSize.height) {
                     let y = Math.abs(displayPosY) - parentSize.height
@@ -591,7 +591,7 @@ export default class TableView extends Component {
             // 判断当前页
             let offset = this.scrollView.getScrollOffset();
             let curOffset = this._curPageOffset
-            if (this._direction == ScrollViewDirection.HORIZONTAL) {
+            if (this._direction == EScrollViewDirection.HORIZONTAL) {
                 if (-offset.x - curOffset.x > 10) {
                     this.setPageIndex(this._curPageIndex + 1)
                 } else if (-offset.x - curOffset.x < -10) {
@@ -600,7 +600,7 @@ export default class TableView extends Component {
                     this.setPageIndex(this._curPageIndex)
                 }
             } else {
-                if (this.vordering == VerticalFillOrder.TOP_DOWN) {
+                if (this.vordering == EVerticalFillOrder.TOP_DOWN) {
                     if (offset.y - curOffset.y < -10) {
                         this.setPageIndex(this._curPageIndex - 1)
                     } else if (offset.y - curOffset.y > 10) {
@@ -685,7 +685,7 @@ export default class TableView extends Component {
                 this._cellsPositions[i] = currentPos;
                 cellSize = this._dataSource.tableCellSizeForIndex(i);
                 switch (this.getDirection()) {
-                    case ScrollViewDirection.HORIZONTAL:
+                    case EScrollViewDirection.HORIZONTAL:
                         currentPos += cellSize.width + this.midInterval;
                         break;
                     default:
@@ -704,7 +704,7 @@ export default class TableView extends Component {
         if (cellCount > 0) {
             let maxPosition = this._cellsPositions[cellCount] + this.endInterval;
             //当单元格数量不足以填满视图时，使用视图大小（这里-1 是为了隐藏scorllbar）
-            if (this.getDirection() == ScrollViewDirection.HORIZONTAL) {
+            if (this.getDirection() == EScrollViewDirection.HORIZONTAL) {
                 size = new Size(Math.max(maxPosition, this._viewSize.width - 1), this._viewSize.height);
             } else {
                 size = new Size(this._viewSize.width, Math.max(maxPosition, this._viewSize.height - 1));
@@ -716,7 +716,7 @@ export default class TableView extends Component {
         let _direction = this.getDirection()
         if (this._oldDirection != _direction) {
             this._oldDirection = _direction;
-            if (this.direction == ScrollViewDirection.VERTICAL && this.vordering == VerticalFillOrder.BOTTOM_UP) {
+            if (this.direction == EScrollViewDirection.VERTICAL && this.vordering == EVerticalFillOrder.BOTTOM_UP) {
                 this.setContentOffset(this.maxContainerOffset());
             } else {
                 this.setContentOffset(this.minContainerOffset());
@@ -729,12 +729,12 @@ export default class TableView extends Component {
         let offset;
         let cellSize: Size = this._dataSource.tableCellSizeForIndex(index);
         switch (this.getDirection()) {
-            case ScrollViewDirection.HORIZONTAL:
+            case EScrollViewDirection.HORIZONTAL:
                 offset = new Vec3(this._cellsPositions[index], -cellSize.height / 2 - this._viewSize.height / 2);
                 break;
             default:
                 var posX = (this._viewSize.width - cellSize.width) / 2;
-                if (this.vordering === VerticalFillOrder.BOTTOM_UP) {
+                if (this.vordering === EVerticalFillOrder.BOTTOM_UP) {
                     let contentSize = this.getContainer().getContentSize();
                     offset = new Vec3(posX, -contentSize.height + this._cellsPositions[index]);
                 } else {
@@ -749,7 +749,7 @@ export default class TableView extends Component {
     private _indexFromOffset(offset: Vec2): number {
         let index = 0
         let maxIdx = this._dataSource.numberOfCellsInTableView() - 1;
-        // if (this.vordering === VerticalFillOrder.TOP_DOWN) {
+        // if (this.vordering === EVerticalFillOrder.TOP_DOWN) {
         //     offset.y = this.getContainer().getContentSize().height - offset.y;
         // }
         index = this.__indexFromOffset(offset);
@@ -768,7 +768,7 @@ export default class TableView extends Component {
         let high = this._dataSource.numberOfCellsInTableView() - 1;
         let search;
         switch (this.getDirection()) {
-            case ScrollViewDirection.HORIZONTAL:
+            case EScrollViewDirection.HORIZONTAL:
                 search = offset.x;
                 break;
             default:
@@ -867,7 +867,7 @@ export default class TableView extends Component {
         }
         table.initWithSize(tableViewSize)
         table.setDirection(data.direction || table.direction);
-        table.setVerticalFillOrder(data.fillOrder || VerticalFillOrder.TOP_DOWN);
+        table.setVerticalFillOrder(data.fillOrder || EVerticalFillOrder.TOP_DOWN);
         table.setTableInterval(data.starInterval, data.midInterval, data.endInterval)
         table.setIsFade(data.isFade == true)
 
@@ -907,7 +907,7 @@ export default class TableView extends Component {
             this.reloadData();
         } else {
             let offset = this.scrollView.getScrollOffset();
-            if (this._direction == ScrollViewDirection.HORIZONTAL) {
+            if (this._direction == EScrollViewDirection.HORIZONTAL) {
                 offset.x = offset.x * -1
             }
             this._closeRefresh = true
@@ -927,7 +927,7 @@ export default class TableView extends Component {
         cell.parent.setContentSize(cellSize)
 
         let offset = this.scrollView.getScrollOffset();
-        if (this._direction == ScrollViewDirection.HORIZONTAL) {
+        if (this._direction == EScrollViewDirection.HORIZONTAL) {
             offset.x = offset.x * -1
         }
         this._forceRefresh = true
@@ -965,7 +965,7 @@ export default class TableView extends Component {
     }
 
 
-    getOffsetByCondition(condition: TableViewOffSetType, selectIndex: number) {
+    getOffsetByCondition(condition: ETableViewOffSetType, selectIndex: number) {
         return this._getOffSetByIndex(selectIndex, condition)
     }
 
@@ -976,7 +976,7 @@ export default class TableView extends Component {
         // 判断当前cell是否在视图中
 
         hasAnimation = hasAnimation || true;
-        let delta = this.getOffsetByCondition(TableViewOffSetType.appear, selectIndex)
+        let delta = this.getOffsetByCondition(ETableViewOffSetType.appear, selectIndex)
         this.setContentOffset(delta, hasAnimation)
     }
 
@@ -985,7 +985,7 @@ export default class TableView extends Component {
             return;
         }
         hasAnimation = hasAnimation || true;
-        let delta = this.getOffsetByCondition(TableViewOffSetType.top, selectIndex)
+        let delta = this.getOffsetByCondition(ETableViewOffSetType.top, selectIndex)
         this.setContentOffset(delta, hasAnimation)
     }
 
@@ -1004,7 +1004,7 @@ export default class TableView extends Component {
         );
     }
 
-    _getOffSetByIndex(index, offSetType: TableViewOffSetType = TableViewOffSetType.none) {
+    _getOffSetByIndex(index, offSetType: ETableViewOffSetType = ETableViewOffSetType.none) {
         let cellIndex = this._dataSource.getCellIndex(index)
         if (cellIndex < 0 || cellIndex >= this._cellsPositions.length - 1) {
             return new Vec2()
@@ -1013,11 +1013,11 @@ export default class TableView extends Component {
         let offsetPos = this._cellsPositions[cellIndex]
         let cellSize: Size = this._dataSource.tableCellSizeForIndex(index);
         switch (this.getDirection()) {
-            case ScrollViewDirection.HORIZONTAL:
+            case EScrollViewDirection.HORIZONTAL:
                 offset.x = offsetPos + this._pageOffset
-                if (offSetType == TableViewOffSetType.center) {
+                if (offSetType == ETableViewOffSetType.center) {
                     offset.x = offset.x - (this._viewSize.width - cellSize.width) / 2
-                } else if (offSetType == TableViewOffSetType.appear) {
+                } else if (offSetType == ETableViewOffSetType.appear) {
                     if (this.checkCellInView(index)) {
                         offset = this.scrollView.getScrollOffset();
                         offset.x = offset.x * -1
@@ -1030,12 +1030,12 @@ export default class TableView extends Component {
                 offset.y = 0
                 break;
             default:
-                if (this.vordering === VerticalFillOrder.BOTTOM_UP) {
+                if (this.vordering === EVerticalFillOrder.BOTTOM_UP) {
                     let contentSize = this.getContainer().getContentSize();
                     offset.y = contentSize.height - this._viewSize.height - offsetPos + this._pageOffset
-                    if (offSetType == TableViewOffSetType.center) {
+                    if (offSetType == ETableViewOffSetType.center) {
                         offset.y = offset.y + (this._viewSize.height - cellSize.height) / 2
-                    } else if (offSetType == TableViewOffSetType.appear) {
+                    } else if (offSetType == ETableViewOffSetType.appear) {
                         if (this.checkCellInView(index)) {
                             offset = this.scrollView.getScrollOffset();
                         } else {
@@ -1046,9 +1046,9 @@ export default class TableView extends Component {
                     }
                 } else {
                     offset.y = offsetPos + this._pageOffset;
-                    if (offSetType == TableViewOffSetType.center) {
+                    if (offSetType == ETableViewOffSetType.center) {
                         offset.y = offset.y - (this._viewSize.height - cellSize.height) / 2
-                    } else if (offSetType == TableViewOffSetType.appear) {
+                    } else if (offSetType == ETableViewOffSetType.appear) {
                         if (this.checkCellInView(index)) {
                             offset = this.scrollView.getScrollOffset();
                         } else {
@@ -1090,7 +1090,7 @@ export default class TableView extends Component {
     /**
      * 滚动到指定索引处的单元格
      */
-    scrollToIndex(index: number, animated: boolean = false, offSetType: TableViewOffSetType = TableViewOffSetType.none, callback?: any, customOffsetX = 0, customOffsetY = 0) {
+    scrollToIndex(index: number, animated: boolean = false, offSetType: ETableViewOffSetType = ETableViewOffSetType.none, callback?: any, customOffsetX = 0, customOffsetY = 0) {
         var cellIndex = this._dataSource.getCellIndex(index)
         if (cellIndex < 0 || cellIndex >= this._cellsPositions.length - 1) {
             return
