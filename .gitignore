@@ -16,6 +16,9 @@ assets/res/
 # 配置表导出目录（由 Excel 插件本地生成，不提交）
 assets/config/
 
+# Excel 导表插件本地缓存（路径与 hash 因机器而异，不提交）
+extensions/export-excel/cache/fileCache.json
+
 # 依赖目录
 node_modules/
 

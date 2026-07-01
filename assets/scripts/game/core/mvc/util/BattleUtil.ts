@@ -34,6 +34,18 @@ export class BattleUtil {
     static get maxCardNum(): number {
         return this.get("maxCardNum");
     }
+
+    /** 进冒险选角：initRandAttrs.speed 范围内均匀随机整数 */
+    static rollInitSpeed(): number {
+        const content = this.get("initRandAttrs") as { speed?: [number, number] } | undefined;
+        const range = content?.speed;
+        if (range == null || range.length < 2) {
+            return 100;
+        }
+        const min = Math.min(range[0], range[1]);
+        const max = Math.max(range[0], range[1]);
+        return Math.floor(min + Math.random() * (max - min + 1));
+    }
 }
 
 

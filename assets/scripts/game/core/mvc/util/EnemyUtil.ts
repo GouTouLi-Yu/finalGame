@@ -1,13 +1,13 @@
 import { ConfigReader } from 'db://assets/scripts/frame/Data/ConfigReader';
 
-const TABLE = 'HeroBase';
+const TABLE = 'EnemyConfig';
 
-export class HeroUtil {
+export class EnemyUtil {
     static getCfg(id: string) {
         return ConfigReader.getDataById(TABLE, id);
     }
 
-    static getNameKey(id: string): string {
-        return this.getCfg(id)?.name ?? id;
+    static getSpeed(id: string): number {
+        return this.getCfg(id)?.speed ?? 0;
     }
 }
