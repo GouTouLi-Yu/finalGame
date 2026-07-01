@@ -1,3 +1,5 @@
+import { IAdventureDeploySaveData, IDeploySlotSaveData } from '../../../../save/PlayerSaveData';
+
 export const ADVENTURE_ACTIVE_SLOT_COUNT = 4;
 export const ADVENTURE_BENCH_SLOT_COUNT = 6;
 
@@ -114,5 +116,34 @@ export class AdventureDeployModel {
         for (let i = 0; i < ADVENTURE_BENCH_SLOT_COUNT; i++) {
             this._bench.push({ level: 1, heroId: null, speed: 0 });
         }
+    }
+
+    synchronize(data: IAdventureDeploySaveData | null | undefined): void {
+        if (data == null) {
+            this.resetToDefault();
+            return;
+        }
+        this._active = this.hydrateSlots(data.active, ADVENTURE_ACTIVE_SLOT_COUNT);
+        this._bench = this.hydrateSlots(data.bench, ADVENTURE_BENCH_SLOT_COUNT);
+    }
+
+    getSaveData(): IAdventureDeploySaveData {
+        return {
+            active: this._active.map((s) => ({ ...s })),
+            bench: this._bench.map((s) => ({ ...s })),
+        };
+    }
+
+    private hydrateSlots(raw: IDeploySlotSaveData[] | undefined, count: number): IDeploySlotState[] {
+        const out: IDeploySlotState[] = [];
+        for (let i = 0; i < count; i++) {
+            const s = raw?.[i];
+            out.push({
+                level: s?.level ?? 1,
+                heroId: s?.heroId ?? null,
+                speed: s?.speed ?? 0,
+            });
+        }
+        return out;
     }
 }

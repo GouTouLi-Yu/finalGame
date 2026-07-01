@@ -23,11 +23,13 @@ export class AdventureModel extends Model {
             return;
         }
         this._cardModel.synchronize(data.adventureCards);
+        this._deployModel.synchronize(data.deploy);
     }
 
     getSaveData(): IAdventureSaveData {
         return {
             adventureCards: this._cardModel.getSaveData(),
+            deploy: this._deployModel.getSaveData(),
         };
     }
 

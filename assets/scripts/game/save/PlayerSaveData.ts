@@ -1,7 +1,7 @@
 /** 磁盘存档 JSON 对应的结构；变更时请递增 SAVE_VERSION 并做好迁移或兼容 */
 
 /** 与磁盘存档不兼容时由 {@link SaveGameService.load} 整份移除 */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 /** 元素组件数据 */
 export interface IElementSaveDataItem {
@@ -24,9 +24,23 @@ export interface IAdventureCardSaveData {
     level: number;
 }
 
+/** 编队单槽存档 */
+export interface IDeploySlotSaveData {
+    level: number;
+    heroId: string | null;
+    speed: number;
+}
+
+/** 冒险编队存档 */
+export interface IAdventureDeploySaveData {
+    active: IDeploySlotSaveData[];
+    bench: IDeploySlotSaveData[];
+}
+
 /** 冒险存档（各字段对应 AdventureModel 子模块） */
 export interface IAdventureSaveData {
     adventureCards: IAdventureCardSaveData[];
+    deploy?: IAdventureDeploySaveData;
 }
 
 export interface PlayerSaveData {

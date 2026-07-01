@@ -78,11 +78,12 @@ export class BattleDeckModel {
         return [...this._library, ...this._hand, ...this._discard, ...this._exhaust];
     }
 
-    /** 显式洗牌（仅在有洗牌机制时调用，摸牌/回收不会自动调用） */
-    shuffleLibrary(): void {
+    /** 显式洗牌（仅在有洗牌机制时调用；传入 rng 则确定性洗牌） */
+    shuffleLibrary(rng?: { nextInt(max: number): number }): void {
         const arr = this._library;
+        const pick = rng ?? { nextInt: (max: number) => Math.floor(Math.random() * max) };
         for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const j = pick.nextInt(i + 1);
             const tmp = arr[i];
             arr[i] = arr[j];
             arr[j] = tmp;

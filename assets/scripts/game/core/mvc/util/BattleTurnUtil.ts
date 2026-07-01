@@ -21,7 +21,7 @@ export interface IBattleTurnOverride {
 
 /**
  * 整场战斗持续生效的规则来源（角色被动、遗物、场地等）。
- * 注册到 BattleModel 后，与单次传入的 {@link IBattleTurnOverride} 自动合并。
+ * 注册到 BattleSession 后，与单次传入的 {@link IBattleTurnOverride} 自动合并。
  */
 export interface IBattleTurnRuleProvider {
     getInitialHandOverride?(): IBattleTurnOverride | undefined;

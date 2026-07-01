@@ -1,5 +1,5 @@
 import { IBattleUnitTurnEvent, IBattleUnitTurnSnapshot } from 'db://assets/scripts/game/core/mvc/model/battle/BattleActionBarModel';
-import { BattleModel } from 'db://assets/scripts/game/core/mvc/model/battle/BattleModel';
+import { EBattlePlayFail } from 'db://assets/scripts/game/core/mvc/model/battle/BattleTypes';
 import { EBattleSide } from 'db://assets/scripts/game/core/mvc/model/battle/EBattleSide';
 import { BattleUtil } from 'db://assets/scripts/game/core/mvc/util/BattleUtil';
 import { CardUtil } from 'db://assets/scripts/game/core/mvc/util/CardUtil';
@@ -28,6 +28,10 @@ export class BattleSimValidator {
 
     get failureCount(): number {
         return this._failures.length;
+    }
+
+    get checkCount(): number {
+        return this._checks;
     }
 
     /** 进战 / 轮次结束后的基准快照 */
@@ -146,7 +150,7 @@ export class BattleSimValidator {
                     play.manaCost === cfgCost,
                     `play=${play.manaCost} cfg=${cfgCost}`,
                 );
-            } else if (play.reason === BattleModel.PLAY_FAIL_NO_MANA) {
+            } else if (play.reason === EBattlePlayFail.NO_MANA) {
                 this.check(
                     `${stepLabel} 魔力不足时状态不变`,
                     true,
