@@ -42,6 +42,11 @@
         "message": "run-disable-atlas-compress"
       },
       {
+        "path": "ts插件/图片",
+        "label": "TinyPNG 压缩",
+        "message": "run-tinypng-compress"
+      },
+      {
         "path": "ts插件/anim",
         "label": "动画一键命名",
         "message": "run-anim-batch-rename"
@@ -86,6 +91,11 @@
       "run-disable-atlas-compress": {
         "methods": [
           "runDisableAtlasCompress"
+        ]
+      },
+      "run-tinypng-compress": {
+        "methods": [
+          "runTinypngCompress"
         ]
       },
       "run-anim-batch-rename": {

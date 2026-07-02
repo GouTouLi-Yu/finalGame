@@ -24,10 +24,10 @@
             "_value": false
           },
           "3d": {
-            "_value": true
+            "_value": false
           },
           "meshopt": {
-            "_value": true
+            "_value": false
           },
           "2d": {
             "_value": true
@@ -113,7 +113,7 @@
             "_value": false
           },
           "debug-renderer": {
-            "_value": true
+            "_value": false
           },
           "particle-2d": {
             "_value": true
@@ -193,17 +193,14 @@
         "flags": {},
         "includeModules": [
           "2d",
-          "3d",
           "affine-transform",
           "animation",
           "audio",
           "base",
           "custom-pipeline",
-          "debug-renderer",
           "gfx-webgl",
           "graphics",
           "mask",
-          "meshopt",
           "particle-2d",
           "profiler",
           "rich-text",

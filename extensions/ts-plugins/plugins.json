@@ -49,6 +49,15 @@
       "description": "取消 assets/res/anim 与 assets/res/uires 下所有自动图集的压缩纹理"
     },
     {
+      "id": "tinypng-compress",
+      "category": "图片",
+      "label": "TinyPNG 压缩",
+      "extension": "tinypng-tools",
+      "message": "tinypng-tools:open-panel",
+      "openPanel": "tinypng-tools",
+      "description": "选择文件夹，TinyPNG 原地压缩 PNG/JPG，不修改引擎资源"
+    },
+    {
       "id": "anim-batch-rename",
       "category": "anim",
       "label": "动画一键命名",
