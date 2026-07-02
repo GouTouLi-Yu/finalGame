@@ -1,0 +1,32 @@
+<h2 class="title">BC7 压缩 (Steam PC)</h2>
+<p class="hint">
+  选择文件夹，将该目录下所有 <span class="mono">PNG</span> 用 texconv 转为 <span class="mono">BC7 DDS</span> 并删除原 PNG。<br/>
+  原图备份在 <span class="mono">.bc7-backup/</span>，可点「从备份还原」。不修改 <span class="mono">assets/res</span>。
+</p>
+
+<ui-prop>
+  <ui-label slot="label">texconv.exe</ui-label>
+  <div slot="content" class="folder-row">
+    <ui-text-area id="texconvPath" placeholder="DirectXTex 的 texconv.exe 路径"></ui-text-area>
+    <ui-button id="btnPickTexconv">浏览</ui-button>
+  </div>
+</ui-prop>
+<p class="hint small">下载：<span class="mono">DirectXTex/texconv</span>（GitHub 发布页）。也可写入 settings.json</p>
+
+<ui-prop>
+  <ui-label slot="label">图片文件夹</ui-label>
+  <div slot="content" class="folder-row">
+    <ui-input id="folderPath" placeholder="选择要压缩的文件夹"></ui-input>
+    <ui-button id="btnPick">选择</ui-button>
+  </div>
+</ui-prop>
+
+<div class="btn-row">
+  <ui-button id="compressBtn">开始 BC7 压缩</ui-button>
+  <ui-button id="restoreBtn">从备份还原</ui-button>
+</div>
+
+<div id="result" class="result hidden">
+  <div id="resultTitle" class="resultTitle"></div>
+  <ul id="resultList" class="resultList"></ul>
+</div>

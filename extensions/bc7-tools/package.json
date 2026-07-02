@@ -1,0 +1,59 @@
+{
+  "name": "bc7-tools",
+  "version": "1.0.0",
+  "package_version": 2,
+  "description": "BC7 纹理压缩 - 使用 texconv 将 PNG 转为 BC7 DDS",
+  "main": "./main.js",
+  "author": "",
+  "editor": ">=3.8.0",
+  "panels": {
+    "default": {
+      "title": "BC7 压缩",
+      "main": "./panel.js",
+      "type": "dockable",
+      "size": {
+        "width": 580,
+        "height": 520
+      }
+    }
+  },
+  "contributions": {
+    "messages": {
+      "bc7-tools:open-panel": {
+        "methods": [
+          "openPanel"
+        ]
+      },
+      "bc7-tools:get-config": {
+        "methods": [
+          "getConfig"
+        ]
+      },
+      "bc7-tools:set-config": {
+        "methods": [
+          "setConfig"
+        ]
+      },
+      "bc7-tools:pick-folder": {
+        "methods": [
+          "pickFolder"
+        ]
+      },
+      "bc7-tools:pick-texconv": {
+        "methods": [
+          "pickTexconv"
+        ]
+      },
+      "bc7-tools:compress-folder": {
+        "methods": [
+          "compressFolder"
+        ]
+      },
+      "bc7-tools:restore-folder": {
+        "methods": [
+          "restoreFolder"
+        ]
+      }
+    }
+  }
+}

@@ -49,6 +49,15 @@
       "description": "取消 assets/res/anim 与 assets/res/uires 下所有自动图集的压缩纹理"
     },
     {
+      "id": "bc7-compress",
+      "category": "图片",
+      "label": "BC7 压缩",
+      "extension": "bc7-tools",
+      "message": "bc7-tools:open-panel",
+      "openPanel": "bc7-tools",
+      "description": "选择文件夹，texconv 将 PNG 转为 BC7 DDS，支持备份还原"
+    },
+    {
       "id": "anim-batch-rename",
       "category": "anim",
       "label": "动画一键命名",
