@@ -1,0 +1,103 @@
+{
+  "name": "ts-plugins",
+  "version": "1.0.0",
+  "package_version": 2,
+  "description": "TS 插件中心 - 统一管理项目内所有 TypeScript 插件",
+  "main": "./main.js",
+  "author": "",
+  "editor": ">=3.8.0",
+  "scripts": {
+    "sync-menu": "node sync-menu.js"
+  },
+  "contributions": {
+    "menu": [
+      {
+        "path": "ts插件/excel",
+        "label": "一键导表",
+        "message": "run-export-excel"
+      },
+      {
+        "path": "ts插件/excel",
+        "label": "导表校验",
+        "message": "run-validate-excel"
+      },
+      {
+        "path": "ts插件/excel",
+        "label": "打开数据表目录",
+        "message": "run-open-excel-folder"
+      },
+      {
+        "path": "ts插件/图片",
+        "label": "背景图位置检查",
+        "message": "run-check-background"
+      },
+      {
+        "path": "ts插件/图片",
+        "label": "多引用移到 common",
+        "message": "run-move-shared-to-common"
+      },
+      {
+        "path": "ts插件/图片",
+        "label": "一键取消所有图集压缩纹理",
+        "message": "run-disable-atlas-compress"
+      },
+      {
+        "path": "ts插件/anim",
+        "label": "动画一键命名",
+        "message": "run-anim-batch-rename"
+      },
+      {
+        "path": "ts插件/anim",
+        "label": "一键制作帧动画",
+        "message": "run-build-frame-anim"
+      }
+    ],
+    "messages": {
+      "run-plugin": {
+        "methods": [
+          "runPlugin"
+        ]
+      },
+      "run-export-excel": {
+        "methods": [
+          "runExportExcel"
+        ]
+      },
+      "run-validate-excel": {
+        "methods": [
+          "runValidateExcel"
+        ]
+      },
+      "run-open-excel-folder": {
+        "methods": [
+          "runOpenExcelFolder"
+        ]
+      },
+      "run-check-background": {
+        "methods": [
+          "runCheckBackground"
+        ]
+      },
+      "run-move-shared-to-common": {
+        "methods": [
+          "runMoveSharedToCommon"
+        ]
+      },
+      "run-disable-atlas-compress": {
+        "methods": [
+          "runDisableAtlasCompress"
+        ]
+      },
+      "run-anim-batch-rename": {
+        "methods": [
+          "runAnimBatchRename"
+        ]
+      },
+      "run-build-frame-anim": {
+        "methods": [
+          "runBuildFrameAnim"
+        ]
+      }
+    }
+  }
+}

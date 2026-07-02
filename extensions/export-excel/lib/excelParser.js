@@ -251,6 +251,18 @@ class ExcelParser {
             if (!idValue || String(idValue).trim() === '') continue;
 
             const id = String(idValue).trim();
+            if (data[id]) {
+                this.errorHandler.addError(
+                    fileName,
+                    sheetName,
+                    row,
+                    idCol,
+                    'id',
+                    `ID 重复: "${id}"`
+                );
+                continue;
+            }
+
             const rowData = { id };
 
             for (let col = 2; col <= maxCol; col++) {

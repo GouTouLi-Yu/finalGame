@@ -1,0 +1,159 @@
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+const PKG = 'anim-tools';
+
+module.exports = Editor.Panel.define({
+    template: fs.readFileSync(path.join(__dirname, 'panel-build.html'), 'utf-8'),
+    style: `
+        :host {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            gap: 8px;
+        }
+        .title {
+            margin: 0;
+            font-size: 16px;
+            color: var(--color-normal-contrast-weakest);
+        }
+        .hint {
+            margin: 0 0 4px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--color-normal-contrast-weaker);
+        }
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        .folder-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .folder-row ui-input {
+            flex: 1;
+        }
+        .result {
+            margin-top: 4px;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .result.hidden {
+            display: none;
+        }
+        .result.success {
+            background: rgba(82, 196, 26, 0.12);
+            border: 1px solid rgba(82, 196, 26, 0.35);
+            color: #52c41a;
+        }
+        .result.error {
+            background: rgba(255, 77, 79, 0.12);
+            border: 1px solid rgba(255, 77, 79, 0.35);
+            color: #ff4d4f;
+        }
+        .resultTitle {
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .resultList {
+            margin: 0;
+            padding-left: 16px;
+            max-height: 200px;
+            overflow: auto;
+        }
+        .resultList li {
+            margin: 2px 0;
+            word-break: break-all;
+        }
+    `,
+    $: {
+        folderPath: '#folderPath',
+        btnPick: '#btnPick',
+        buildBtn: '#buildBtn',
+        result: '#result',
+        resultTitle: '#resultTitle',
+        resultList: '#resultList',
+    },
+    methods: {
+        showResult(ok, title, lines) {
+            const box = this.$.result;
+            box.classList.remove('hidden', 'success', 'error');
+            box.classList.add(ok ? 'success' : 'error');
+            this.$.resultTitle.textContent = title || '';
+            this.$.resultList.innerHTML = '';
+            if (lines && lines.length) {
+                lines.forEach((line) => {
+                    const li = document.createElement('li');
+                    li.textContent = String(line);
+                    this.$.resultList.appendChild(li);
+                });
+            }
+        },
+
+        async loadConfig() {
+            try {
+                const config = await Editor.Message.request(PKG, 'anim-tools:get-config');
+                if (config && config.lastBuildFolder) {
+                    this.$.folderPath.value = config.lastBuildFolder;
+                }
+            } catch (error) {
+                console.warn('[anim-tools] 读取配置失败:', error);
+            }
+        },
+
+        async pickFolder() {
+            try {
+                const folderPath = await Editor.Message.request(PKG, 'anim-tools:pick-folder');
+                if (folderPath) {
+                    this.$.folderPath.value = folderPath;
+                }
+            } catch (error) {
+                this.showResult(false, '选择失败', [error.message || String(error)]);
+            }
+        },
+
+        async doBuild() {
+            const folderPath = (this.$.folderPath.value || '').trim();
+            if (!folderPath) {
+                this.showResult(false, '请先选择美术序列帧目录', []);
+                return;
+            }
+
+            this.$.buildBtn.disabled = true;
+            this.showResult(true, '正在制作帧动画，请稍候...', []);
+
+            try {
+                const resp = await Editor.Message.request(PKG, 'anim-tools:build-frame-anim', { folderPath });
+                if (resp && resp.success) {
+                    this.showResult(true, resp.message || '制作成功', resp.files || []);
+                } else {
+                    this.showResult(false, (resp && resp.message) || '制作失败', (resp && resp.files) || []);
+                }
+            } catch (error) {
+                this.showResult(false, '制作失败', [error.message || String(error)]);
+            } finally {
+                this.$.buildBtn.disabled = false;
+            }
+        },
+    },
+    ready() {
+        const missing = Object.entries(this.$).filter(([, el]) => !el).map(([key]) => key);
+        if (missing.length) {
+            console.error('[anim-tools] 面板元素未找到:', missing.join(', '));
+            return;
+        }
+
+        this.loadConfig();
+        this.$.btnPick.addEventListener('confirm', () => {
+            this.pickFolder();
+        });
+        this.$.buildBtn.addEventListener('confirm', () => {
+            this.doBuild();
+        });
+    },
+    close() {},
+});

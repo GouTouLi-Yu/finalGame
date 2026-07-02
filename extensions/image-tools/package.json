@@ -1,0 +1,28 @@
+{
+  "name": "image-tools",
+  "version": "1.0.0",
+  "package_version": 2,
+  "description": "图片资源处理：背景图检查、多引用资源整理",
+  "main": "./main.js",
+  "author": "",
+  "editor": ">=3.8.0",
+  "contributions": {
+    "messages": {
+      "image-tools:check-background": {
+        "methods": [
+          "runCheckBackground"
+        ]
+      },
+      "image-tools:move-shared-to-common": {
+        "methods": [
+          "runMoveSharedToCommon"
+        ]
+      },
+      "image-tools:disable-atlas-compress": {
+        "methods": [
+          "runDisableAtlasCompressTexture"
+        ]
+      }
+    }
+  }
+}

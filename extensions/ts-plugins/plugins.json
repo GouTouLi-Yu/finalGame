@@ -1,0 +1,70 @@
+{
+  "plugins": [
+    {
+      "id": "export-excel",
+      "category": "excel",
+      "label": "一键导表",
+      "extension": "export-excel",
+      "message": "export-excel:open-panel",
+      "description": "将 Excel 数据表导出为 JSON 配置"
+    },
+    {
+      "id": "validate-excel",
+      "category": "excel",
+      "label": "导表校验",
+      "extension": "export-excel",
+      "message": "export-excel:validate",
+      "description": "校验 Excel 数据表格式、ID 重复、表名冲突等问题"
+    },
+    {
+      "id": "open-excel-folder",
+      "category": "excel",
+      "label": "打开数据表目录",
+      "extension": "export-excel",
+      "message": "export-excel:open-folder",
+      "description": "在资源管理器中打开 Excel 数据表目录"
+    },
+    {
+      "id": "check-background",
+      "category": "图片",
+      "label": "背景图位置检查",
+      "extension": "image-tools",
+      "message": "image-tools:check-background",
+      "description": "检查背景尺寸图片是否放在 bg 目录，且未被打进图集"
+    },
+    {
+      "id": "move-shared-to-common",
+      "category": "图片",
+      "label": "多引用移到 common",
+      "extension": "image-tools",
+      "message": "image-tools:move-shared-to-common",
+      "description": "将 prefab 跨模块静态引用的图片剪切到 common/res 图集目录"
+    },
+    {
+      "id": "disable-atlas-compress",
+      "category": "图片",
+      "label": "一键取消所有图集压缩纹理",
+      "extension": "image-tools",
+      "message": "image-tools:disable-atlas-compress",
+      "description": "取消 assets/res/anim 与 assets/res/uires 下所有自动图集的压缩纹理"
+    },
+    {
+      "id": "anim-batch-rename",
+      "category": "anim",
+      "label": "动画一键命名",
+      "extension": "anim-tools",
+      "message": "anim-tools:open-panel",
+      "openPanel": "anim-tools",
+      "description": "批量将文件夹内序列帧按前缀重命名为 _001、_002..."
+    },
+    {
+      "id": "build-frame-anim",
+      "category": "anim",
+      "label": "一键制作帧动画",
+      "extension": "anim-tools",
+      "message": "anim-tools:open-build-panel",
+      "openPanel": "anim-tools.build",
+      "description": "从美术 anim 目录一键生成引擎帧动画资源"
+    }
+  ]
+}

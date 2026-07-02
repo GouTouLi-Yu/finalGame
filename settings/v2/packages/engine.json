@@ -24,10 +24,10 @@
             "_value": false
           },
           "3d": {
-            "_value": false
+            "_value": true
           },
           "meshopt": {
-            "_value": false
+            "_value": true
           },
           "2d": {
             "_value": true
@@ -113,7 +113,7 @@
             "_value": false
           },
           "debug-renderer": {
-            "_value": false
+            "_value": true
           },
           "particle-2d": {
             "_value": true
@@ -193,14 +193,17 @@
         "flags": {},
         "includeModules": [
           "2d",
+          "3d",
           "affine-transform",
           "animation",
           "audio",
           "base",
           "custom-pipeline",
+          "debug-renderer",
           "gfx-webgl",
           "graphics",
           "mask",
+          "meshopt",
           "particle-2d",
           "profiler",
           "rich-text",
@@ -216,5 +219,8 @@
       }
     },
     "globalConfigKey": "defaultConfig"
+  },
+  "macroConfig": {
+    "CLEANUP_IMAGE_CACHE": false
   }
 }
