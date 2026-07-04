@@ -21,6 +21,7 @@ import './game/core/mvc/util/ArmyUtil';
 import './game/core/mvc/util/BattleAutoPlayUtil';
 import './game/core/mvc/util/EnemyUtil';
 import './game/core/mvc/view/GM/GMMediator';
+import './game/core/mvc/view/battle/BattleMediator';
 import './game/core/mvc/view/mainMenu/MainMenuMediator';
 import './game/core/mvc/view/test/BattleSimRunner';
 import './game/core/mvc/view/test/TestMediator';

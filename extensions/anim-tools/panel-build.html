@@ -1,8 +1,9 @@
 <h2 class="title">一键制作帧动画</h2>
 <p class="hint">
   选择美术序列帧目录，例如 <span class="mono">...\美术\anim\character\liYin\battle\hurt</span><br/>
-  将自动生成到 <span class="mono">assets/res/anim/character/liYin/battle/hurt</span><br/>
-  含 <span class="mono">res/</span> 图片、4096 图集、<span class="mono">anim.prefab</span>、<span class="mono">animClip.anim</span>
+  将先按前缀重命名为 <span class="mono">前缀_001</span>、<span class="mono">_002</span> …，再生成到 <span class="mono">assets/res/anim/character/liYin/battle/hurt</span><br/>
+  含 <span class="mono">res/</span> 图片、4096 图集、<span class="mono">anim.prefab</span>、<span class="mono">animClip.anim</span><br/>
+  可先设置缩放比例（0~2），再批量缩放序列帧后制作
 </p>
 
 <ui-prop>
@@ -10,6 +11,19 @@
   <div slot="content" class="folder-row">
     <ui-input id="folderPath" placeholder="选择 ...\美术\anim\ 下的动作文件夹"></ui-input>
     <ui-button id="btnPick">选择文件夹</ui-button>
+  </div>
+</ui-prop>
+
+<ui-prop>
+  <ui-label slot="label">命名前缀</ui-label>
+  <ui-input id="namePrefix" slot="content" placeholder="anim_chac_liYin_hurt"></ui-input>
+</ui-prop>
+
+<ui-prop>
+  <ui-label slot="label">缩放比例</ui-label>
+  <div slot="content" class="scale-row">
+    <ui-input id="scaleInput" placeholder="1"></ui-input>
+    <span class="scale-hint">0 ~ 2，1 为原尺寸</span>
   </div>
 </ui-prop>
 

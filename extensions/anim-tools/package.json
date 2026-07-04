@@ -2,37 +2,23 @@
   "name": "anim-tools",
   "version": "1.0.0",
   "package_version": 2,
-  "description": "动画工具 - 序列帧批量命名等",
+  "description": "动画工具 - 序列帧命名与帧动画一键制作",
   "main": "./main.js",
   "author": "",
   "editor": ">=3.8.0",
   "panels": {
-    "default": {
-      "title": "动画一键命名",
-      "main": "./panel.js",
-      "type": "dockable",
-      "size": {
-        "width": 520,
-        "height": 560
-      }
-    },
     "build": {
       "title": "一键制作帧动画",
       "main": "./panel-build.js",
       "type": "dockable",
       "size": {
         "width": 560,
-        "height": 420
+        "height": 480
       }
     }
   },
   "contributions": {
     "messages": {
-      "anim-tools:open-panel": {
-        "methods": [
-          "openPanel"
-        ]
-      },
       "anim-tools:open-build-panel": {
         "methods": [
           "openBuildPanel"
@@ -53,9 +39,9 @@
           "pickFolder"
         ]
       },
-      "anim-tools:batch-rename": {
+      "anim-tools:suggest-prefix": {
         "methods": [
-          "batchRename"
+          "suggestPrefix"
         ]
       },
       "anim-tools:build-frame-anim": {

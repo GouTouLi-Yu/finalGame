@@ -49,31 +49,13 @@
       "description": "取消 assets/res/anim 与 assets/res/uires 下所有自动图集的压缩纹理"
     },
     {
-      "id": "bc7-compress",
-      "category": "图片",
-      "label": "BC7 压缩",
-      "extension": "bc7-tools",
-      "message": "bc7-tools:open-panel",
-      "openPanel": "bc7-tools",
-      "description": "选择文件夹，texconv 将 PNG 转为 BC7 DDS，支持备份还原"
-    },
-    {
-      "id": "anim-batch-rename",
-      "category": "anim",
-      "label": "动画一键命名",
-      "extension": "anim-tools",
-      "message": "anim-tools:open-panel",
-      "openPanel": "anim-tools",
-      "description": "批量将文件夹内序列帧按前缀重命名为 _001、_002..."
-    },
-    {
       "id": "build-frame-anim",
       "category": "anim",
       "label": "一键制作帧动画",
       "extension": "anim-tools",
       "message": "anim-tools:open-build-panel",
       "openPanel": "anim-tools.build",
-      "description": "从美术 anim 目录一键生成引擎帧动画资源"
+      "description": "序列帧批量命名并一键生成引擎帧动画资源"
     }
   ]
 }

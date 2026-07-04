@@ -17,6 +17,7 @@ import { ViewConfig } from '../config/ViewConfig';
 import { logPrefabConventionMismatch, resolveViewPathForViewId } from '../config/ViewPathResolver';
 import { ResManager } from '../manager/ResManager';
 import { MediatorMap } from '../map/MediatorMap';
+import { LocalizedTextBinder } from '../i18n/LocalizedTextBinder';
 import { initUiFramework } from './UIFramework';
 
 const NAME_AREA_LAYER = '__UIAreaLayer';
@@ -289,6 +290,7 @@ export class UIManager {
 
         const root = instantiate(prefabAsset);
         (root as any).getViewName = () => resolved.viewId;
+        LocalizedTextBinder.bindDeep(root);
 
         const layerParent = resolved.kind === 'area' ? this._areaLayer : this._popupLayer;
         const target = overrideParent != null ? overrideParent : layerParent;
@@ -316,6 +318,8 @@ export class UIManager {
 
         const mediator = mm.createMediator(root);
         mediator?.enterWithData?.(data);
+        // Mediator 可能在 enterWithData 里切换语言，此处再刷一次文案
+        LocalizedTextBinder.refreshDeep(root);
 
         return root;
     }

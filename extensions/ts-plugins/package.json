@@ -42,16 +42,6 @@
         "message": "run-disable-atlas-compress"
       },
       {
-        "path": "ts插件/图片",
-        "label": "BC7 压缩",
-        "message": "run-bc7-compress"
-      },
-      {
-        "path": "ts插件/anim",
-        "label": "动画一键命名",
-        "message": "run-anim-batch-rename"
-      },
-      {
         "path": "ts插件/anim",
         "label": "一键制作帧动画",
         "message": "run-build-frame-anim"
@@ -91,16 +81,6 @@
       "run-disable-atlas-compress": {
         "methods": [
           "runDisableAtlasCompress"
-        ]
-      },
-      "run-bc7-compress": {
-        "methods": [
-          "runBc7Compress"
-        ]
-      },
-      "run-anim-batch-rename": {
-        "methods": [
-          "runAnimBatchRename"
         ]
       },
       "run-build-frame-anim": {

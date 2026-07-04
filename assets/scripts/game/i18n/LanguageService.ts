@@ -5,7 +5,12 @@ import { PCEventType } from '../../frame/event/PCEventType';
 import { Injector } from '../../frame/Injector/Injector';
 import { GameConfig } from '../config/GameConfig';
 import { DataStoreUtil } from '../utils/DataStoreUtil';
-import { ELanguage, LANGUAGE_CYCLE_ORDER } from './LanguageType';
+import {
+    ELanguage,
+    isSupportedLanguage,
+    LANGUAGE_CYCLE_ORDER,
+    LANGUAGE_FALLBACK_ORDER,
+} from './LanguageType';
 
 const LANGUAGE_STORAGE_KEY = 'game_language';
 const TRANSLATE_TABLE = 'Translate';
@@ -15,8 +20,13 @@ export class LanguageService {
 
     /** 启动时调用一次（ConfigReader.init 之后） */
     static init(): void {
+        if (GameConfig.test) {
+            // 测试模式下以 GameConfig.language 为准，避免本地缓存覆盖调试语言
+            this._current = GameConfig.language;
+            return;
+        }
         const saved = DataStoreUtil.loadData<string>(LANGUAGE_STORAGE_KEY);
-        this._current = this.parseLanguage(saved) ?? GameConfig.language;
+        this._current = isSupportedLanguage(saved) ? saved : GameConfig.language;
     }
 
     static getCurrent(): ELanguage {
@@ -29,6 +39,10 @@ export class LanguageService {
     }
 
     static setLanguage(lang: ELanguage): void {
+        if (!isSupportedLanguage(lang)) {
+            console.warn(`[LanguageService] 不支持的语言: ${lang}`);
+            return;
+        }
         if (this._current === lang) {
             return;
         }
@@ -37,7 +51,7 @@ export class LanguageService {
         this.dispatchLanguageChanged();
     }
 
-    /** 设置按钮：中 → 英 → 日 → 中 */
+    /** 设置按钮：按 LANGUAGE_CYCLE_ORDER 循环切换 */
     static cycleLanguage(): ELanguage {
         const idx = LANGUAGE_CYCLE_ORDER.indexOf(this._current);
         const next = LANGUAGE_CYCLE_ORDER[(idx + 1) % LANGUAGE_CYCLE_ORDER.length];
@@ -45,7 +59,7 @@ export class LanguageService {
         return next;
     }
 
-    /** 从 Translate 表取当前语言文案；缺省时回退 zh */
+    /** 从 Translate 表取当前语言文案；缺省时按 LANGUAGE_FALLBACK_ORDER 回退 */
     static getTranslateText(id: string): string | null {
         if (!id) {
             return null;
@@ -59,18 +73,14 @@ export class LanguageService {
         if (typeof text === 'string' && text !== '') {
             return text;
         }
-        if (field !== ELanguage.CN) {
-            const fallback = row[ELanguage.CN];
-            if (typeof fallback === 'string' && fallback !== '') {
-                return fallback;
+        const fallbacks = LANGUAGE_FALLBACK_ORDER[field];
+        if (fallbacks) {
+            for (const fbField of fallbacks) {
+                const fbText = row[fbField];
+                if (typeof fbText === 'string' && fbText !== '') {
+                    return fbText;
+                }
             }
-        }
-        return null;
-    }
-
-    private static parseLanguage(raw: unknown): ELanguage | null {
-        if (raw === ELanguage.CN || raw === ELanguage.EN || raw === ELanguage.JP) {
-            return raw;
         }
         return null;
     }

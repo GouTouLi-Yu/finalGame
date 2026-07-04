@@ -1,4 +1,6 @@
 import { Player } from '../core/mvc/model/Player/Player';
+import { LanguageService } from '../i18n/LanguageService';
+import { getLanguageNativeName } from '../i18n/LanguageType';
 import { SaveGameService } from '../manager/SaveGameService';
 import { GMCheatActionRegistry } from './GMCheatActionRegistry';
 import { GMCheatService } from './GMCheatService';
@@ -28,5 +30,10 @@ export function initGMCheatActions(): void {
         Player.instance.resetToDefault();
         SaveGameService.save();
         console.log('[GM] 已清空玩家数据');
+    });
+    /** 切换语言（循环：简中 → 繁中 → 英 → 日 → 韩） */
+    GMCheatActionRegistry.register('cycleLang', () => {
+        const next = LanguageService.cycleLanguage();
+        console.log(`[GM] 当前语言: ${next} (${getLanguageNativeName(next)})`);
     });
 }

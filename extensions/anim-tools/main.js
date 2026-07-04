@@ -6,8 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 const ConfigManager = require('./lib/configManager');
-const { batchRenameImages } = require('./lib/batchRename');
 const { buildFrameAnim } = require('./lib/buildFrameAnim');
+const { suggestPrefixFromSource } = require('./lib/animPathUtil');
 
 const configManager = new ConfigManager();
 
@@ -24,35 +24,6 @@ function getDefaultAnimFolder() {
         return resolved;
     }
     return Editor.Project.path;
-}
-
-function toPosixPath(value) {
-    return value.split(path.sep).join('/');
-}
-
-function toDbUrl(absolutePath) {
-    const projectRoot = Editor.Project.path;
-    const relative = path.relative(projectRoot, absolutePath);
-    if (relative.startsWith('..')) {
-        return null;
-    }
-    return `db://${toPosixPath(relative)}`;
-}
-
-async function refreshFolderIfInProject(folderPath) {
-    const dbUrl = toDbUrl(path.normalize(folderPath));
-    if (!dbUrl) {
-        return;
-    }
-    try {
-        await Editor.Message.request('asset-db', 'refresh-asset', dbUrl);
-    } catch (error) {
-        console.warn('[anim-tools] 刷新资源目录失败:', error.message || error);
-    }
-}
-
-async function openPanel() {
-    await Editor.Panel.open('anim-tools');
 }
 
 async function openBuildPanel() {
@@ -87,52 +58,18 @@ async function pickFolder() {
     return result.filePaths[0];
 }
 
-async function batchRename(options) {
+function suggestPrefix(options) {
     const folderPath = options && options.folderPath ? options.folderPath.trim() : '';
-    const prefix = options && options.prefix ? options.prefix.trim() : '';
-
     if (!folderPath) {
-        return {
-            success: false,
-            message: '请先选择文件夹',
-            files: [],
-        };
+        return '';
     }
-
-    try {
-        console.log('========== 动画一键命名 ==========');
-        console.log(`文件夹: ${folderPath}`);
-        console.log(`前缀: ${prefix}`);
-
-        const result = batchRenameImages(folderPath, prefix);
-
-        if (result.success) {
-            configManager.saveConfig({
-                ...configManager.readConfig(),
-                lastFolder: folderPath,
-                lastPrefix: prefix,
-            });
-            console.log(`序号: ${result.startIndex} 起，${result.padLength} 位`);
-            await refreshFolderIfInProject(folderPath);
-            result.renames.forEach((line) => console.log(`  ${line}`));
-            console.log(`✓ ${result.message}`);
-        } else {
-            console.warn(`[anim-tools] ${result.message}`);
-        }
-
-        return result;
-    } catch (error) {
-        console.error('[anim-tools] 重命名失败:', error);
-        return {
-            success: false,
-            message: error.message || String(error),
-            files: [],
-        };
-    }
+    return suggestPrefixFromSource(folderPath);
 }
 
 async function buildFrameAnimAction(options) {
     const folderPath = options && options.folderPath ? options.folderPath.trim() : '';
+    const prefix = options && options.prefix ? options.prefix.trim() : '';
+    const scale = options && options.scale !== undefined ? options.scale : 1;
 
     if (!folderPath) {
         return {
@@ -141,12 +78,28 @@ async function buildFrameAnimAction(options) {
         };
     }
 
+    if (!prefix) {
+        return {
+            success: false,
+            message: '请先输入命名前缀',
+        };
+    }
+
+    if (!Number.isFinite(scale) || scale < 0 || scale > 2) {
+        return {
+            success: false,
+            message: '缩放比例必须是 0 ~ 2 之间的数值',
+        };
+    }
+
     try {
-        const result = await buildFrameAnim(folderPath);
+        const result = await buildFrameAnim(folderPath, { scale, prefix });
         if (result.success) {
             configManager.saveConfig({
                 ...configManager.readConfig(),
                 lastBuildFolder: folderPath,
+                lastBuildScale: scale,
+                lastPrefix: prefix,
             });
             console.log(`✓ ${result.message}`);
         } else {
@@ -163,12 +116,11 @@ async function buildFrameAnimAction(options) {
 }
 
 exports.methods = {
-    openPanel,
     openBuildPanel,
     getConfig,
     setConfig,
     pickFolder,
-    batchRename,
+    suggestPrefix,
     buildFrameAnimAction,
 };
 

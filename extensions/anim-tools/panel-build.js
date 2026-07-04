@@ -36,6 +36,19 @@ module.exports = Editor.Panel.define({
         .folder-row ui-input {
             flex: 1;
         }
+        .scale-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .scale-row ui-input {
+            width: 80px;
+            flex: none;
+        }
+        .scale-hint {
+            font-size: 12px;
+            color: var(--color-normal-contrast-weaker);
+        }
         .result {
             margin-top: 4px;
             padding: 8px 10px;
@@ -72,6 +85,8 @@ module.exports = Editor.Panel.define({
     `,
     $: {
         folderPath: '#folderPath',
+        namePrefix: '#namePrefix',
+        scaleInput: '#scaleInput',
         btnPick: '#btnPick',
         buildBtn: '#buildBtn',
         result: '#result',
@@ -94,14 +109,45 @@ module.exports = Editor.Panel.define({
             }
         },
 
+        parseScale(value) {
+            const raw = (value || '').trim();
+            if (raw === '') {
+                return 1;
+            }
+            const scale = Number(raw);
+            if (!Number.isFinite(scale) || scale < 0 || scale > 2) {
+                return null;
+            }
+            return scale;
+        },
+
         async loadConfig() {
             try {
                 const config = await Editor.Message.request(PKG, 'anim-tools:get-config');
                 if (config && config.lastBuildFolder) {
                     this.$.folderPath.value = config.lastBuildFolder;
                 }
+                if (config && config.lastPrefix) {
+                    this.$.namePrefix.value = config.lastPrefix;
+                }
+                if (config && config.lastBuildScale !== undefined && config.lastBuildScale !== '') {
+                    this.$.scaleInput.value = String(config.lastBuildScale);
+                } else {
+                    this.$.scaleInput.value = '1';
+                }
             } catch (error) {
                 console.warn('[anim-tools] 读取配置失败:', error);
+            }
+        },
+
+        async suggestPrefixForFolder(folderPath) {
+            try {
+                const prefix = await Editor.Message.request(PKG, 'anim-tools:suggest-prefix', { folderPath });
+                if (prefix) {
+                    this.$.namePrefix.value = prefix;
+                }
+            } catch (error) {
+                console.warn('[anim-tools] 推测命名前缀失败:', error);
             }
         },
 
@@ -110,6 +156,7 @@ module.exports = Editor.Panel.define({
                 const folderPath = await Editor.Message.request(PKG, 'anim-tools:pick-folder');
                 if (folderPath) {
                     this.$.folderPath.value = folderPath;
+                    await this.suggestPrefixForFolder(folderPath);
                 }
             } catch (error) {
                 this.showResult(false, '选择失败', [error.message || String(error)]);
@@ -118,20 +165,51 @@ module.exports = Editor.Panel.define({
 
         async doBuild() {
             const folderPath = (this.$.folderPath.value || '').trim();
+            const prefix = (this.$.namePrefix.value || '').trim();
             if (!folderPath) {
                 this.showResult(false, '请先选择美术序列帧目录', []);
                 return;
             }
+            if (!prefix) {
+                this.showResult(false, '请先输入命名前缀', []);
+                return;
+            }
+
+            const scale = this.parseScale(this.$.scaleInput.value);
+            if (scale === null) {
+                this.showResult(false, '缩放比例无效', ['请输入 0 ~ 2 之间的数值，1 表示原尺寸']);
+                return;
+            }
 
             this.$.buildBtn.disabled = true;
-            this.showResult(true, '正在制作帧动画，请稍候...', []);
+            this.showResult(true, '正在重命名并制作帧动画，请稍候...', []);
 
             try {
-                const resp = await Editor.Message.request(PKG, 'anim-tools:build-frame-anim', { folderPath });
+                const resp = await Editor.Message.request(PKG, 'anim-tools:build-frame-anim', {
+                    folderPath,
+                    prefix,
+                    scale,
+                });
                 if (resp && resp.success) {
-                    this.showResult(true, resp.message || '制作成功', resp.files || []);
+                    const lines = [];
+                    if (resp.renames && resp.renames.length) {
+                        lines.push(`已重命名 ${resp.renameCount || resp.renames.length} 张序列帧`);
+                        lines.push(...resp.renames);
+                    }
+                    if (resp.files && resp.files.length) {
+                        if (lines.length) {
+                            lines.push('');
+                        }
+                        lines.push('生成资源：');
+                        lines.push(...resp.files);
+                    }
+                    this.showResult(true, resp.message || '制作成功', lines);
                 } else {
-                    this.showResult(false, (resp && resp.message) || '制作失败', (resp && resp.files) || []);
+                    this.showResult(
+                        false,
+                        (resp && resp.message) || '制作失败',
+                        (resp && (resp.renames || resp.files)) || []
+                    );
                 }
             } catch (error) {
                 this.showResult(false, '制作失败', [error.message || String(error)]);

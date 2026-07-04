@@ -27,6 +27,7 @@ class ConfigManager {
             lastFolder: '',
             lastPrefix: 'anim_chac_liYin_idle',
             lastBuildFolder: '',
+            lastBuildScale: 1,
         };
     }
 

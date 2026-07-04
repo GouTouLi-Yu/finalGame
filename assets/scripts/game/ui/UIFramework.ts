@@ -1,5 +1,6 @@
 import { EventDispatcher } from '../../frame/event/EventDispatcher';
 import { Injector } from '../../frame/Injector/Injector';
+import { LocalizedTextBinder } from '../i18n/LocalizedTextBinder';
 import { MediatorMap } from '../map/MediatorMap';
 
 /**
@@ -13,4 +14,6 @@ export function initUiFramework() {
     const mm = new MediatorMap();
     mm.injector = Injector.shared;
     Injector.shared.mapValue('MediatorMap', mm);
+
+    LocalizedTextBinder.init();
 }

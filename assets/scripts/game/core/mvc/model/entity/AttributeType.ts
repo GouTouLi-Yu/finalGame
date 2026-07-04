@@ -6,7 +6,7 @@ export enum EAttributeType {
     /** 血量 */
     hp = 'hp',
     /** 合奏精通 */
-    comboMastery = 'comboMastery',
+    resonanceMastery = 'resonanceMastery',
     /** 百分比生命值 */
     hpPercent = 'hpPercent',
     /** 百分比攻击力 */

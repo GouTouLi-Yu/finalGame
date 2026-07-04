@@ -49,6 +49,23 @@ function resolveTargetFromSource(sourceFolder) {
     };
 }
 
+/** 根据美术 anim 路径推测序列帧命名前缀，例如 anim_chac_liYin_hurt */
+function suggestPrefixFromSource(sourceFolder) {
+    try {
+        const mapping = resolveTargetFromSource(sourceFolder);
+        const segments = mapping.relAfterAnim.split('/').filter(Boolean);
+        const rootType = segments[0].toLowerCase();
+        const typeAbbr = rootType === 'character' ? 'chac' : rootType;
+        const actionName = segments[segments.length - 1];
+        if (rootType === 'character' && segments.length >= 2) {
+            return `anim_${typeAbbr}_${segments[1]}_${actionName}`;
+        }
+        return `anim_${typeAbbr}_${actionName}`;
+    } catch {
+        return '';
+    }
+}
+
 function toDbUrl(absolutePath) {
     const projectRoot = Editor.Project.path;
     const relative = path.relative(projectRoot, path.normalize(absolutePath));
@@ -60,6 +77,7 @@ function toDbUrl(absolutePath) {
 
 module.exports = {
     resolveTargetFromSource,
+    suggestPrefixFromSource,
     toDbUrl,
     toPosixPath,
     PROTECTED_DB_URLS,

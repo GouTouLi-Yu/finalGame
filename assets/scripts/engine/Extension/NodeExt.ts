@@ -834,7 +834,13 @@ Node.prototype.getChildByPath = function (path: string): Node | null {
         if (index !== -1) {
             segment = segment.slice(0, index);
         }
-        const next = lastNode.children.find((childNode) => childNode.name === segment);
+        const next = lastNode.children.find((childNode) => {
+            if (childNode.name === segment) {
+                return true;
+            }
+            const at = childNode.name.indexOf('@');
+            return at !== -1 && childNode.name.slice(0, at) === segment;
+        });
         if (!next) {
             return null;
         }
