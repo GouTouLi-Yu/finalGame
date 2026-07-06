@@ -1,7 +1,10 @@
 <h2 class="title">一键制作帧动画</h2>
 <p class="hint">
-  选择美术序列帧目录，例如 <span class="mono">...\美术\anim\character\liYin\battle\hurt</span><br/>
-  将先按前缀重命名为 <span class="mono">前缀_001</span>、<span class="mono">_002</span> …，再生成到 <span class="mono">assets/res/anim/character/liYin/battle/hurt</span><br/>
+  选择美术序列帧目录，例如：<br/>
+  <span class="mono">...\美术\anim\character\liYin\battle\hurt</span> → <span class="mono">assets/res/anim/character/liYin/battle/hurt</span><br/>
+  <span class="mono">...\美术\anim\ui\button\click</span> → <span class="mono">assets/res/anim/ui/button/click</span><br/>
+  <span class="mono">...\美术\anim\enemy\goblin\attack</span> → <span class="mono">assets/res/anim/enemy/goblin/attack</span><br/>
+  将先按前缀重命名为 <span class="mono">前缀_001</span>、<span class="mono">_002</span> …，再生成到对应 <span class="mono">assets/res/anim/{character|ui|enemy}/...</span><br/>
   含 <span class="mono">res/</span> 图片、4096 图集、<span class="mono">anim.prefab</span>、<span class="mono">animClip.anim</span><br/>
   可先设置缩放比例（0~2），再批量缩放序列帧后制作
 </p>
@@ -16,7 +19,7 @@
 
 <ui-prop>
   <ui-label slot="label">命名前缀</ui-label>
-  <ui-input id="namePrefix" slot="content" placeholder="anim_chac_liYin_hurt"></ui-input>
+  <ui-input id="namePrefix" slot="content" placeholder="anim_chac_liYin_hurt / anim_enemy_goblin_attack"></ui-input>
 </ui-prop>
 
 <ui-prop>

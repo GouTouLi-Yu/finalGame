@@ -22,6 +22,10 @@ extensions/export-excel/cache/fileCache.json
 # 依赖目录
 node_modules/
 
+# basisu / BC 纹理测试产物（勿提交）
+sample_*
+tools/basisu/
+
 # 系统文件
 .DS_Store
 Thumbs.db

@@ -5,7 +5,7 @@
       "width": 2560,
       "height": 1440,
       "fitHeight": true,
-      "fitWidth": false
+      "fitWidth": true
     }
   },
   "custom_joint_texture_layouts": []
