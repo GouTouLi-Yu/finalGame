@@ -35,6 +35,25 @@ export class BattleUtil {
         return this.get("maxCardNum");
     }
 
+    /** 9 张手牌：左半+中心 5 组 [x,y]（右侧对称展开） */
+    static get cardPos9(): readonly (readonly [number, number])[] {
+        return this.get("cardPos9");
+    }
+
+    static get cardRot9(): readonly number[] {
+        return this.get("cardRot9");
+    }
+
+    /** 10 张手牌坐标（配表 id cardPos10） */
+    static get cardPos10(): readonly (readonly [number, number])[] {
+        return this.get("cardPos10");
+    }
+
+    /** 10 张手牌旋转（配表 id 为 cardRotaition10，拼写与表一致） */
+    static get cardRot10(): readonly number[] {
+        return this.get("cardRotaition10");
+    }
+
     /** 进冒险选角：initRandAttrs.speed 范围内均匀随机整数 */
     static rollInitSpeed(): number {
         const content = this.get("initRandAttrs") as { speed?: [number, number] } | undefined;

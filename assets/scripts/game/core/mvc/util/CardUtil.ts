@@ -36,6 +36,10 @@ export class CardUtil {
         return this.getCfg(id)?.actionId ?? '';
     }
 
+    static isValidCardId(id: string): boolean {
+        return this.getCfg(id) != null;
+    }
+
     /**
      * 解析 params：数组取下标 level-1；单值各等级相同。
      * level 小于 1 时按 1 处理；超出数组长度取最后一档。

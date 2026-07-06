@@ -13,7 +13,9 @@ export interface IGMConfigRow {
 }
 
 /**
- * 秘籍执行：表里 id = 玩家输入，action = 要调用的函数名。
+ * 秘籍执行：查 GMConfig。
+ * - 整行与 id 完全一致（如 printHelp、delAllRandCard）
+ * - 或以首词查表，其余词作为参数（如 addHandCard card_001 3）
  */
 export class GMCheatService {
     private static normalizeId(raw: string): string {
@@ -31,18 +33,21 @@ export class GMCheatService {
     }
 
     static has(raw: string): boolean {
-        return this.getRowByInput(raw) != null;
+        return this.resolveRow(raw) != null;
     }
 
     /**
-     * 执行秘籍：按输入查表 id → 取 action → 调用注册函数。命中返回 true。
+     * 执行秘籍：命中返回 true。
      */
     static execute(raw: string): boolean {
         if (!DevConfig.isGMAllowed()) return false;
 
-        const row = this.getRowByInput(raw);
-        if (!row) return false;
+        const resolved = this.resolveRow(raw);
+        if (resolved == null) {
+            return false;
+        }
 
+        const { row, args } = resolved;
         const action = String(row.action ?? '').trim();
         if (!action) {
             console.warn(`[GMCheatService] 秘籍 ${row.id} 未配置 action`);
@@ -55,7 +60,11 @@ export class GMCheatService {
             return false;
         }
 
-        handler(row.params);
+        if (args.length > 0) {
+            handler(args);
+        } else {
+            handler(row.params);
+        }
         return true;
     }
 
@@ -66,7 +75,7 @@ export class GMCheatService {
             return;
         }
 
-        const lines = ['[GM] 可用秘籍：'];
+        const lines = ['[GM] 可用秘籍（带参数的命令用空格分隔）：'];
         const rows: IGMConfigRow[] = [];
         for (const [_id, row] of pairs(table)) {
             rows.push(row as IGMConfigRow);
@@ -79,5 +88,28 @@ export class GMCheatService {
             if (id) lines.push(`  ${id} - ${desc}`);
         }
         console.log(lines.join('\n'));
+    }
+
+    private static resolveRow(raw: string): { row: IGMConfigRow; args: string[] } | null {
+        const trimmed = raw.trim();
+        if (!trimmed) {
+            return null;
+        }
+
+        const exact = this.getRowByInput(trimmed);
+        if (exact != null) {
+            return { row: exact, args: [] };
+        }
+
+        const parts = trimmed.split(/\s+/).filter(Boolean);
+        if (parts.length < 2) {
+            return null;
+        }
+
+        const head = this.getRowByInput(parts[0]);
+        if (head == null) {
+            return null;
+        }
+        return { row: head, args: parts.slice(1) };
     }
 }

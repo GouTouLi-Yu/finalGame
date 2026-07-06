@@ -32,4 +32,7 @@ export const PCEventType = {
 
     /** 语言切换后派发，payload: { language: ELanguage } */
     EVT_LANGUAGE_CHANGED: EventTypeUtil.id('EVT_LANGUAGE_CHANGED'),
+
+    /** 战斗手牌变更（增删/出牌后）；BattleView 监听刷新 */
+    EVT_BATTLE_HAND_CHANGED: EventTypeUtil.id('EVT_BATTLE_HAND_CHANGED'),
 };

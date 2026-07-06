@@ -132,6 +132,49 @@ export class BattleDeckModel {
         this._discard.unshift(card);
     }
 
+    /** 手牌剩余可添加张数 */
+    get handCapacityRemaining(): number {
+        return Math.max(0, BattleUtil.maxCardNum - this._hand.length);
+    }
+
+    /** 添加一张到手牌末尾（左→右展示顺序与数组下标一致）；满则 false */
+    addToHand(card: Card): boolean {
+        if (this._hand.length >= BattleUtil.maxCardNum) {
+            return false;
+        }
+        this._hand.push(card);
+        return true;
+    }
+
+    /** 按 1 起始序号移除手牌（UI 从左到右第 n 张）；无效序号 null */
+    removeHandAtPosition(oneBased: number): Card | null {
+        const idx = oneBased - 1;
+        if (idx < 0 || idx >= this._hand.length) {
+            return null;
+        }
+        return this._hand.splice(idx, 1)[0] ?? null;
+    }
+
+    /** 移除手牌中所有指定 id 的牌 */
+    removeAllFromHandById(cardId: string): Card[] {
+        const removed: Card[] = [];
+        for (let i = this._hand.length - 1; i >= 0; i--) {
+            const c = this._hand[i];
+            if (c != null && c.id === cardId) {
+                const card = this._hand.splice(i, 1)[0];
+                if (card != null) {
+                    removed.push(card);
+                }
+            }
+        }
+        return removed;
+    }
+
+    /** 清空手牌并返回被移除的牌 */
+    clearHand(): Card[] {
+        return this._hand.splice(0);
+    }
+
     /** 从手牌移除指定牌；成功返回该牌，否则 null */
     removeFromHand(card: Card): Card | null {
         const idx = this._hand.indexOf(card);

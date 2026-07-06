@@ -2,6 +2,7 @@ import { Player } from '../core/mvc/model/Player/Player';
 import { LanguageService } from '../i18n/LanguageService';
 import { getLanguageNativeName } from '../i18n/LanguageType';
 import { SaveGameService } from '../manager/SaveGameService';
+import { BattleGMCheatService } from './BattleGMCheatService';
 import { GMCheatActionRegistry } from './GMCheatActionRegistry';
 import { GMCheatService } from './GMCheatService';
 
@@ -36,4 +37,11 @@ export function initGMCheatActions(): void {
         const next = LanguageService.cycleLanguage();
         console.log(`[GM] 当前语言: ${next} (${getLanguageNativeName(next)})`);
     });
+
+    /** 战斗手牌（GMConfig 首词 + 空格参数；需在 BattleView） */
+    GMCheatActionRegistry.register('addHandCard', (args) => BattleGMCheatService.addHandCard(args));
+    GMCheatActionRegistry.register('addRandHandCard', (args) => BattleGMCheatService.addRandHandCard(args));
+    GMCheatActionRegistry.register('delRandCardByPos', (args) => BattleGMCheatService.delRandCardByPos(args));
+    GMCheatActionRegistry.register('delAllRandCard', () => BattleGMCheatService.delAllRandCard());
+    GMCheatActionRegistry.register('delRndCardById', (args) => BattleGMCheatService.delRndCardById(args));
 }
