@@ -1,0 +1,64 @@
+export enum AnimQualityLevel {
+    High = 'high',
+    Mid = 'mid',
+    Low = 'low',
+}
+
+/** 编辑器 number 档位与运行时画质枚举的对应：0=高档 1=中档 2=低档 */
+export const ANIM_QUALITY_LEVEL_NUMBERS: Record<AnimQualityLevel, number> = {
+    [AnimQualityLevel.High]: 0,
+    [AnimQualityLevel.Mid]: 1,
+    [AnimQualityLevel.Low]: 2,
+};
+
+export function animQualityLevelToNumber(level: AnimQualityLevel): number {
+    return ANIM_QUALITY_LEVEL_NUMBERS[level];
+}
+
+export function isAnimQualityLevelNumber(value: number): boolean {
+    return value === 0 || value === 1 || value === 2;
+}
+
+/** qualityLevel>=1 时，当前画质序号 >= qualityLevel 则隐藏（1=中档及以下，2=仅低档，0=不隐藏） */
+export function shouldHideAtQualityLevel(qualityLevel: number, level: AnimQualityLevel): boolean {
+    if (qualityLevel <= 0 || !isAnimQualityLevelNumber(qualityLevel)) {
+        return false;
+    }
+    return animQualityLevelToNumber(level) >= qualityLevel;
+}
+
+export const ANIM_QUALITY_CYCLE_ORDER: AnimQualityLevel[] = [
+    AnimQualityLevel.High,
+    AnimQualityLevel.Mid,
+    AnimQualityLevel.Low,
+];
+
+export const ANIM_QUALITY_CLIP_NAMES: Record<AnimQualityLevel, string> = {
+    [AnimQualityLevel.High]: 'animClip',
+    [AnimQualityLevel.Mid]: 'animClip_mid',
+    [AnimQualityLevel.Low]: 'animClip_low',
+};
+
+/** 按当前 Animation 已挂载 clip 解析实际应播放的 clip 名（两档动画低画质回落到中档） */
+export function resolveAnimQualityClipName(
+    clipNames: ReadonlyArray<string | undefined>,
+    level: AnimQualityLevel,
+): string | null {
+    const preferred = ANIM_QUALITY_CLIP_NAMES[level];
+    if (clipNames.includes(preferred)) {
+        return preferred;
+    }
+    if (level === AnimQualityLevel.Low && clipNames.includes(ANIM_QUALITY_CLIP_NAMES[AnimQualityLevel.Mid])) {
+        return ANIM_QUALITY_CLIP_NAMES[AnimQualityLevel.Mid];
+    }
+    if (clipNames.includes('animClip')) {
+        return 'animClip';
+    }
+    return null;
+}
+
+export function isAnimQualityLevel(value: unknown): value is AnimQualityLevel {
+    return value === AnimQualityLevel.High
+        || value === AnimQualityLevel.Mid
+        || value === AnimQualityLevel.Low;
+}

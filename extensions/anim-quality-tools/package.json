@@ -1,0 +1,23 @@
+{
+  "name": "anim-quality-tools",
+  "version": "1.0.0",
+  "package_version": 2,
+  "description": "帧动画多档画质（PC 轻量）：共用 res 图集，生成 mid/low clip；支持两档或三档",
+  "main": "./main.js",
+  "author": "",
+  "editor": ">=3.8.0",
+  "contributions": {
+    "messages": {
+      "anim-quality-tools:build-tiers": {
+        "methods": [
+          "runBuildQualityTiers"
+        ]
+      },
+      "anim-quality-tools:build-tiers-two": {
+        "methods": [
+          "runBuildQualityTiersTwo"
+        ]
+      }
+    }
+  }
+}

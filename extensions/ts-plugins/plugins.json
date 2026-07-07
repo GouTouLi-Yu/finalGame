@@ -56,6 +56,22 @@
       "message": "anim-tools:open-build-panel",
       "openPanel": "anim-tools.build",
       "description": "序列帧批量命名并一键生成引擎帧动画资源"
+    },
+    {
+      "id": "build-anim-quality-tiers",
+      "category": "anim",
+      "label": "生成三档画质 clip",
+      "extension": "anim-quality-tools",
+      "message": "anim-quality-tools:build-tiers",
+      "description": "选中帧动画目录：共用 res 图集，中档抽 1/6 帧，低档抽 1/3 帧，生成 animClip_mid/low"
+    },
+    {
+      "id": "build-anim-quality-tiers-two",
+      "category": "anim",
+      "label": "生成两档画质 clip",
+      "extension": "anim-quality-tools",
+      "message": "anim-quality-tools:build-tiers-two",
+      "description": "选中帧动画目录：仅生成 animClip_mid；设置里选低画质时自动使用中档"
     }
   ]
 }

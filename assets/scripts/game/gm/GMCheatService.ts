@@ -44,6 +44,11 @@ export class GMCheatService {
 
         const resolved = this.resolveRow(raw);
         if (resolved == null) {
+            const direct = GMCheatActionRegistry.get(this.normalizeId(raw.trim()));
+            if (direct) {
+                direct();
+                return true;
+            }
             return false;
         }
 

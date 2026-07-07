@@ -45,6 +45,16 @@
         "path": "ts插件/anim",
         "label": "一键制作帧动画",
         "message": "run-build-frame-anim"
+      },
+      {
+        "path": "ts插件/anim",
+        "label": "生成三档画质 clip",
+        "message": "run-build-anim-quality-tiers"
+      },
+      {
+        "path": "ts插件/anim",
+        "label": "生成两档画质 clip",
+        "message": "run-build-anim-quality-tiers-two"
       }
     ],
     "messages": {
@@ -86,6 +96,16 @@
       "run-build-frame-anim": {
         "methods": [
           "runBuildFrameAnim"
+        ]
+      },
+      "run-build-anim-quality-tiers": {
+        "methods": [
+          "runBuildAnimQualityTiers"
+        ]
+      },
+      "run-build-anim-quality-tiers-two": {
+        "methods": [
+          "runBuildAnimQualityTiersTwo"
         ]
       }
     }

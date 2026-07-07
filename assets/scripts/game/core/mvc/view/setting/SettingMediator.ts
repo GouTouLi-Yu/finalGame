@@ -1,66 +1,86 @@
+import { Color, Label } from 'cc';
 import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
-import { EGraphicsQuality, getGraphicsQualityLabel } from '../../../../render/GraphicsQualityLevel';
-import { GraphicsQualityService } from '../../../../render/GraphicsQualityService';
+import { PCEventType } from 'db://assets/scripts/frame/event/PCEventType';
+import { AnimQualityLevel } from '../../../../anim/AnimQualityLevel';
+import { AnimQualityService } from '../../../../anim/AnimQualityService';
 import { PopupViewMediator } from '../../../view/PopupViewMediator';
 import { MediatorHandleHelper } from '../../util/MediatorHandleHelper';
 
 /**
- * 设置弹窗（UILayer / __UIPopupLayer，不经过 RenderTexture）。
+ * 设置全屏弹层。
+ * 约定：界面 id `SettingView` → `prefab/setting/SettingLayer`（ui bundle）。
  */
 export class SettingMediator extends PopupViewMediator {
     public static fullPath = 'prefab/setting';
 
     BtnHandles: Record<string, string> = {
         btn1: 'onClickHighQuality',
-        btn2: 'onClickMediumQuality',
+        btn2: 'onClickMidQuality',
         btn3: 'onClickLowQuality',
-        closeBtn: 'onClickClose',
+        btn4: 'onClickClose',
     };
 
-    public initialize(..._any: any[]): void { }
+    private _onAnimQualityChanged = (): void => {
+        this.refreshQualityButtons();
+    };
 
     public onRegister(): void {
         super.onRegister();
+        this.isCloseWhenClickMaskLayer = false;
         this.mapEventListeners();
     }
 
-    public enterWithData(_data?: any): void {
+    public onRemove(): void {
+        this.unmapEventListener(PCEventType.EVT_ANIM_QUALITY_CHANGED, this, this._onAnimQualityChanged);
+        super.onRemove();
+    }
+
+    public enterWithData(_data?: unknown): void {
         super.enterWithData(_data);
         this.setupView();
     }
 
-    public setupView(_data?: any): void {
-        const current = GraphicsQualityService.getCurrent();
-        const scale = GraphicsQualityService.getCurrentScale();
-        console.log(`[Setting] 当前画质: ${getGraphicsQualityLabel(current)} (${scale}x)`);
+    public setupView(_data?: unknown): void {
+        this.refreshQualityButtons();
     }
 
     public mapEventListeners(): void {
         MediatorHandleHelper.setUpBtnHandle(this, this.BtnHandles);
+        this.mapEventListener(PCEventType.EVT_ANIM_QUALITY_CHANGED, this, this._onAnimQualityChanged);
     }
 
     onClickHighQuality(): void {
-        this._selectQuality(EGraphicsQuality.High);
+        AnimQualityService.setLevel(AnimQualityLevel.High);
     }
 
-    onClickMediumQuality(): void {
-        this._selectQuality(EGraphicsQuality.Medium);
+    onClickMidQuality(): void {
+        AnimQualityService.setLevel(AnimQualityLevel.Mid);
     }
 
     onClickLowQuality(): void {
-        this._selectQuality(EGraphicsQuality.Low);
+        AnimQualityService.setLevel(AnimQualityLevel.Low);
     }
 
     onClickClose(): void {
         this.dismiss();
     }
 
-    private _selectQuality(quality: EGraphicsQuality): void {
-        // 先关弹窗，下一帧再切画质，避免弹窗 UILayer 与 RT 绑定同帧导致缩放拉伸
-        this.dismiss();
-        GraphicsQualityService.setQualityFromSetting(quality);
-        const scale = GraphicsQualityService.getCurrentScale();
-        console.log(`[Setting] 已切换画质: ${getGraphicsQualityLabel(quality)} (${scale}x)`);
+    private refreshQualityButtons(): void {
+        const current = AnimQualityService.getCurrent();
+        this.setButtonSelected('btn1', current === AnimQualityLevel.High);
+        this.setButtonSelected('btn2', current === AnimQualityLevel.Mid);
+        this.setButtonSelected('btn3', current === AnimQualityLevel.Low);
+    }
+
+    private setButtonSelected(btnName: string, selected: boolean): void {
+        const btnNode = this.view.getChildByName(btnName);
+        const label = btnNode?.getChildByName('Label')?.getComponent(Label);
+        if (!label) {
+            return;
+        }
+        label.color = selected
+            ? new Color(255, 220, 120, 255)
+            : new Color(255, 255, 255, 255);
     }
 }
 

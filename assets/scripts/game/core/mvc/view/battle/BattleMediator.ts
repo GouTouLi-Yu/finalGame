@@ -6,6 +6,7 @@ import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
 
 import { PCEventType } from 'db://assets/scripts/frame/event/PCEventType';
 
+import { mountBattleDemoAnim } from '../../../../anim/AnimQualityDemo';
 import { BattleFacade } from '../../facade/battle/BattleFacade';
 
 import { Card } from '../../model/card/Card';
@@ -13,11 +14,8 @@ import { Card } from '../../model/card/Card';
 import { BattleHandCardLayoutUtil } from '../../util/BattleHandCardLayoutUtil';
 
 import { AreaViewMediator } from '../../../view/AreaViewMediator';
-
 import { MediatorHandleHelper } from '../../util/MediatorHandleHelper';
-
 import { UIManager } from '../../../../ui/UIManager';
-import { GraphicsQualityService } from '../../../../render/GraphicsQualityService';
 
 
 
@@ -40,6 +38,8 @@ export class BattleMediator extends AreaViewMediator {
         ['card/TestPrev']: 'onHandTestPrev',
 
         ['card/TestNext']: 'onHandTestNext',
+
+        ['img/rightTop/btn_stop']: 'onClickOpenSetting',
 
     };
 
@@ -141,7 +141,7 @@ export class BattleMediator extends AreaViewMediator {
 
         this.refreshHandFromBattle();
 
-        this._mountStopBtnToHud();
+        void mountBattleDemoAnim(this.view);
 
         console.log(
             '[BattleHand] GM 秘籍示例: addHandCard card_001 3 | addRandHandCard 2 | delRandCardByPos 1 | delAllRandCard | delRndCardById card_001',
@@ -243,52 +243,9 @@ export class BattleMediator extends AreaViewMediator {
 
 
 
-    /**
-     * 将可交互按钮挂到 UILayer（__UIHUDLayer），避免中/低画质时随 GameLayer 进 RT 导致无法点击。
-     */
-    private _mountStopBtnToHud(): void {
+    onClickOpenSetting(): void {
 
-        const hud = UIManager.getHudLayer();
-
-        const btn = this.view.getChildByFullName('img/rightTop/btn_stop');
-
-        if (hud == null || btn == null) {
-
-            return;
-
-        }
-
-        const worldPos = btn.worldPosition.clone();
-
-        const worldRot = btn.worldRotation.clone();
-
-        const worldScale = btn.worldScale.clone();
-
-        hud.addChild(btn);
-
-        btn.worldPosition = worldPos;
-
-        btn.worldRotation = worldRot;
-
-        btn.worldScale = worldScale;
-
-        btn.addClickListener([this, this.onClickStopBtn]);
-
-        GraphicsQualityService.syncLayers();
-
-    }
-
-
-
-    onClickStopBtn(): void {
-
-        if (UIManager.isViewOpen('SettingView')) {
-
-            return;
-
-        }
-
-        void UIManager.gotoView('SettingView');
+        void UIManager.gotoView('SettingView', undefined, { showPopupMask: false });
 
     }
 

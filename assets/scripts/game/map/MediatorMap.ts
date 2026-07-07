@@ -19,8 +19,6 @@ interface ViewInfo {
  * 视图与 Mediator 绑定表（精简自 k 项目 MediatorMap）
  */
 export class MediatorMap extends DisposableObject {
-    injector!: Injector;
-
     private _viewNameToMediatorMap = new Map<string, ViewInfo>();
     private _registeredMediators = new Map<Node, any>();
     private _mediatorNameToViewListMap = new Map<string, Node[]>();
@@ -57,7 +55,7 @@ export class MediatorMap extends DisposableObject {
         const info = this._viewNameToMediatorMap.get(viewName);
         if (info != null) {
             const mediatorName = info.mediatorClazz;
-            const mediator = this.injector.instantiate(mediatorName);
+            const mediator = (this.injector as Injector).instantiate(mediatorName);
             if (mediator != null) {
                 const scriptHandler = (node: Node) => {
                     node.off(NodeEventType.NODE_DESTROYED, scriptHandler, this);

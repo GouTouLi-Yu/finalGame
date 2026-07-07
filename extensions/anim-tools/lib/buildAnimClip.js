@@ -5,9 +5,11 @@
 
 const SAMPLE = 30;
 
-function buildAnimClipJson(spriteFrameUuids) {
+function buildAnimClipJson(spriteFrameUuids, options = {}) {
+    const clipName = options.clipName || 'animClip';
+    const sample = typeof options.sample === 'number' && options.sample > 0 ? options.sample : SAMPLE;
     const frameCount = spriteFrameUuids.length;
-    const frameStep = 1 / SAMPLE;
+    const frameStep = 1 / sample;
     const times = [];
     for (let i = 0; i < frameCount; i += 1) {
         times.push(Number((i * frameStep).toFixed(16)));
@@ -21,13 +23,13 @@ function buildAnimClipJson(spriteFrameUuids) {
     return [
         {
             __type__: 'cc.AnimationClip',
-            _name: 'animClip',
+            _name: clipName,
             _objFlags: 0,
             __editorExtras__: {
                 embeddedPlayerGroups: [],
             },
             _native: '',
-            sample: SAMPLE,
+            sample,
             speed: 1,
             wrapMode: 2,
             enableTrsBlending: false,
