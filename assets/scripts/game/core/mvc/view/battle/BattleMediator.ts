@@ -16,6 +16,9 @@ import { AreaViewMediator } from '../../../view/AreaViewMediator';
 
 import { MediatorHandleHelper } from '../../util/MediatorHandleHelper';
 
+import { UIManager } from '../../../../ui/UIManager';
+import { GraphicsQualityService } from '../../../../render/GraphicsQualityService';
+
 
 
 /**
@@ -138,6 +141,8 @@ export class BattleMediator extends AreaViewMediator {
 
         this.refreshHandFromBattle();
 
+        this._mountStopBtnToHud();
+
         console.log(
             '[BattleHand] GM 秘籍示例: addHandCard card_001 3 | addRandHandCard 2 | delRandCardByPos 1 | delAllRandCard | delRndCardById card_001',
         );
@@ -233,6 +238,57 @@ export class BattleMediator extends AreaViewMediator {
     onHandTestNext(): void {
 
         BattleFacade.getInstance().cheatAddRandomHandCard(1);
+
+    }
+
+
+
+    /**
+     * 将可交互按钮挂到 UILayer（__UIHUDLayer），避免中/低画质时随 GameLayer 进 RT 导致无法点击。
+     */
+    private _mountStopBtnToHud(): void {
+
+        const hud = UIManager.getHudLayer();
+
+        const btn = this.view.getChildByFullName('img/rightTop/btn_stop');
+
+        if (hud == null || btn == null) {
+
+            return;
+
+        }
+
+        const worldPos = btn.worldPosition.clone();
+
+        const worldRot = btn.worldRotation.clone();
+
+        const worldScale = btn.worldScale.clone();
+
+        hud.addChild(btn);
+
+        btn.worldPosition = worldPos;
+
+        btn.worldRotation = worldRot;
+
+        btn.worldScale = worldScale;
+
+        btn.addClickListener([this, this.onClickStopBtn]);
+
+        GraphicsQualityService.syncLayers();
+
+    }
+
+
+
+    onClickStopBtn(): void {
+
+        if (UIManager.isViewOpen('SettingView')) {
+
+            return;
+
+        }
+
+        void UIManager.gotoView('SettingView');
 
     }
 

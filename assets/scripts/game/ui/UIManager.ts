@@ -5,6 +5,7 @@ import {
     director,
     Graphics,
     instantiate,
+    Layers,
     Node,
     NodeEventType,
     Prefab,
@@ -18,14 +19,17 @@ import { logPrefabConventionMismatch, resolveViewPathForViewId } from '../config
 import { ResManager } from '../manager/ResManager';
 import { MediatorMap } from '../map/MediatorMap';
 import { LocalizedTextBinder } from '../i18n/LocalizedTextBinder';
+import { GraphicsQualityService } from '../render/GraphicsQualityService';
 import { initUiFramework } from './UIFramework';
 
 const NAME_AREA_LAYER = '__UIAreaLayer';
+const NAME_HUD_LAYER = '__UIHUDLayer';
 const NAME_POPUP_LAYER = '__UIPopupLayer';
 /** 弹窗层底部半透明遮罩（对齐 k：打开弹窗时压暗下层界面） */
 const NAME_POPUP_MASK = '__UIPopupMask';
 
 export const UI_POPUP_LAYER_NODE_NAME = NAME_POPUP_LAYER;
+export const UI_HUD_LAYER_NODE_NAME = NAME_HUD_LAYER;
 export const UI_POPUP_MASK_NODE_NAME = NAME_POPUP_MASK;
 /** 遮罩上底部提示文案节点（由 PopupViewMediator 创建） */
 export const UI_POPUP_MASK_HINT_NODE_NAME = '__PopupMaskCloseHint';
@@ -56,6 +60,7 @@ export class UIManager {
     private static _inited = false;
     private static _canvas: Node | null = null;
     private static _areaLayer: Node | null = null;
+    private static _hudLayer: Node | null = null;
     private static _popupLayer: Node | null = null;
 
     static init() {
@@ -98,29 +103,48 @@ export class UIManager {
             let n = canvas.getChildByName(NAME_AREA_LAYER);
             if (!n) {
                 n = new Node(NAME_AREA_LAYER);
-                n.layer = canvas.layer;
+                n.layer = Layers.Enum.UI_2D;
                 canvas.addChild(n);
             }
             this._fitLayerToCanvas(n, canvas);
             this._areaLayer = n;
         }
 
+        if (!this._hudLayer || !this._hudLayer.isValid) {
+            let n = canvas.getChildByName(NAME_HUD_LAYER);
+            if (!n) {
+                n = new Node(NAME_HUD_LAYER);
+                n.layer = Layers.Enum.UI_2D;
+                canvas.addChild(n);
+            }
+            this._fitLayerToCanvas(n, canvas);
+            this._hudLayer = n;
+        }
+
         if (!this._popupLayer || !this._popupLayer.isValid) {
             let n = canvas.getChildByName(NAME_POPUP_LAYER);
             if (!n) {
                 n = new Node(NAME_POPUP_LAYER);
-                n.layer = canvas.layer;
+                n.layer = Layers.Enum.UI_2D;
                 canvas.addChild(n);
             }
             this._fitLayerToCanvas(n, canvas);
             this._popupLayer = n;
         }
 
-        if (this._areaLayer && this._popupLayer) {
+        if (this._areaLayer && this._hudLayer && this._popupLayer) {
+            this._hudLayer.setSiblingIndex(this._areaLayer.getSiblingIndex() + 1);
             this._popupLayer.setSiblingIndex(canvas.children.length - 1);
         }
 
         return true;
+    }
+
+    /** UILayer：可交互 HUD（按钮等），由 UI 相机直出，不经过 RenderTexture */
+    static getHudLayer(): Node | null {
+        this.init();
+        this.ensureBuiltinLayers();
+        return this._hudLayer;
     }
 
     /**
@@ -321,6 +345,12 @@ export class UIManager {
         // Mediator 可能在 enterWithData 里切换语言，此处再刷一次文案
         LocalizedTextBinder.refreshDeep(root);
 
+        // area 切换走完整 refresh；popup 只同步 Layer，避免干扰画质且保证 UI 相机可见
+        if (resolved.kind === 'area') {
+            GraphicsQualityService.refresh();
+        } else {
+            GraphicsQualityService.syncLayers();
+        }
         return root;
     }
 
