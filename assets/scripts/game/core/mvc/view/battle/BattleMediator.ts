@@ -1,8 +1,8 @@
 import { EventKeyboard, input, Input, KeyCode, Node } from 'cc';
 import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
 import { PCEventType } from 'db://assets/scripts/frame/event/PCEventType';
-import { DevConfig } from '../../../../config/DevConfig';
 import { mountBattleDemoAnim } from '../../../../anim/AnimQualityDemo';
+import { DevConfig } from '../../../../config/DevConfig';
 import { UIManager } from '../../../../ui/UIManager';
 import { AreaViewMediator } from '../../../view/AreaViewMediator';
 import { BattleFacade } from '../../facade/battle/BattleFacade';
