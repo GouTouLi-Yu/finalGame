@@ -11,7 +11,7 @@ const ELEMENT_RES_ATTR_MAP: Record<EElementType, EAttributeType> = {
     [EElementType.light]: EAttributeType.lightRes,
     [EElementType.ice]: EAttributeType.iceRes,
     [EElementType.dark]: EAttributeType.darkRes,
-    [EElementType.phantom]: EAttributeType.phantomRes,
+    [EElementType.poison]: EAttributeType.poisonRes,
 };
 
 /** 元素 → 伤害加成属性 */
@@ -24,7 +24,7 @@ const ELEMENT_DAMAGE_BONUS_ATTR_MAP: Record<EElementType, EAttributeType> = {
     [EElementType.light]: EAttributeType.lightDamageBonus,
     [EElementType.ice]: EAttributeType.iceDamageBonus,
     [EElementType.dark]: EAttributeType.darkDamageBonus,
-    [EElementType.phantom]: EAttributeType.phantomDamageBonus,
+    [EElementType.poison]: EAttributeType.poisonDamageBonus,
 };
 
 export class AttributeUtil {
@@ -38,12 +38,12 @@ export class AttributeUtil {
         return ELEMENT_DAMAGE_BONUS_ATTR_MAP[element];
     }
 
-    /** 全部元素对应的抗性属性（顺序：水火风雷岩光冰暗幻） */
+    /** 全部元素对应的抗性属性（顺序：水火风雷岩光冰暗毒） */
     static getAllElementResAttrs(): EAttributeType[] {
         return ALL_ELEMENT_TYPES.map(e => ELEMENT_RES_ATTR_MAP[e]);
     }
 
-    /** 全部元素对应的伤害加成属性（顺序：水火风雷岩光冰暗幻） */
+    /** 全部元素对应的伤害加成属性（顺序：水火风雷岩光冰暗毒） */
     static getAllElementDamageBonusAttrs(): EAttributeType[] {
         return ALL_ELEMENT_TYPES.map(e => ELEMENT_DAMAGE_BONUS_ATTR_MAP[e]);
     }

@@ -32,8 +32,8 @@ export enum EAttributeType {
     iceRes = 'iceRes',
     /** 暗元素抗性 */
     darkRes = 'darkRes',
-    /** 幻元素抗性 */
-    phantomRes = 'phantomRes',
+    /** 毒元素抗性 */
+    poisonRes = 'poisonRes',
 
     /** 火元素伤害加成 */
     fireDamageBonus = 'fireDamageBonus',
@@ -51,8 +51,8 @@ export enum EAttributeType {
     iceDamageBonus = 'iceDamageBonus',
     /** 暗元素伤害加成 */
     darkDamageBonus = 'darkDamageBonus',
-    /** 幻元素伤害加成 */
-    phantomDamageBonus = 'phantomDamageBonus',
+    /** 毒元素伤害加成 */
+    poisonDamageBonus = 'poisonDamageBonus',
 
     /** 全元素伤害加成 */
     allElementDamageBonus = 'allElementDamageBonus',

@@ -16,11 +16,11 @@ export enum EElementType {
     ice = 'ice',
     /** 暗 */
     dark = 'dark',
-    /** 幻 */
-    phantom = 'phantom',
+    /** 毒 */
+    poison = 'poison',
 }
 
-/** 全部元素，固定顺序：水火风雷岩光冰暗幻 */
+/** 全部元素，固定顺序：水火风雷岩光冰暗毒 */
 export const ALL_ELEMENT_TYPES: readonly EElementType[] = [
     EElementType.water,
     EElementType.fire,
@@ -30,5 +30,5 @@ export const ALL_ELEMENT_TYPES: readonly EElementType[] = [
     EElementType.light,
     EElementType.ice,
     EElementType.dark,
-    EElementType.phantom,
+    EElementType.poison,
 ];
