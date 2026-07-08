@@ -35,23 +35,38 @@ export class BattleUtil {
         return this.get("maxCardNum");
     }
 
+    /** 手牌 N 张时的半侧坐标（cardPos1 ~ cardPos10） */
+    static getCardPosByCount(count: number): readonly (readonly [number, number])[] {
+        const n = Math.max(1, Math.min(count, this.maxCardNum));
+        return this.get(`cardPos${n}`);
+    }
+
+    /** 手牌 N 张时的半侧旋转（cardRot1 ~ cardRot9；10 张为 cardRotaition10） */
+    static getCardRotByCount(count: number): readonly number[] {
+        const n = Math.max(1, Math.min(count, this.maxCardNum));
+        if (n === 10) {
+            return this.get("cardRotaition10");
+        }
+        return this.get(`cardRot${n}`);
+    }
+
     /** 9 张手牌：左半+中心 5 组 [x,y]（右侧对称展开） */
     static get cardPos9(): readonly (readonly [number, number])[] {
-        return this.get("cardPos9");
+        return this.getCardPosByCount(9);
     }
 
     static get cardRot9(): readonly number[] {
-        return this.get("cardRot9");
+        return this.getCardRotByCount(9);
     }
 
-    /** 10 张手牌坐标（配表 id cardPos10） */
+    /** 10 张手牌坐标 */
     static get cardPos10(): readonly (readonly [number, number])[] {
-        return this.get("cardPos10");
+        return this.getCardPosByCount(10);
     }
 
     /** 10 张手牌旋转（配表 id 为 cardRotaition10，拼写与表一致） */
     static get cardRot10(): readonly number[] {
-        return this.get("cardRotaition10");
+        return this.getCardRotByCount(10);
     }
 
     /** 进冒险选角：initRandAttrs.speed 范围内均匀随机整数 */

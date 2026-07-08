@@ -1,4 +1,4 @@
-import { Layout, Node } from 'cc';
+import { Node } from 'cc';
 import { BattleUtil } from './BattleUtil';
 
 export interface IHandCardLayoutSlot {
@@ -7,12 +7,10 @@ export interface IHandCardLayoutSlot {
     rotZ: number;
 }
 
-/** 手牌 ≤8 用 Layout；9/10 张读 ConfigValue 对称坐标 */
+/** 手牌 1~10 张均读 ConfigValue cardPosN / cardRotN，半侧对称展开 */
 export class BattleHandCardLayoutUtil {
-    static readonly LAYOUT_MAX_COUNT = 8;
-
     /**
-     * 将配表半侧 5 个点对称展开为 count 张牌位（9 或 10）。
+     * 将配表半侧 N 个点对称展开为 count 张牌位。
      * 前 half 张用原值；其余 mirror：x 取反，y 不变，角度取反。
      */
     static expandSymmetric(
@@ -35,42 +33,21 @@ export class BattleHandCardLayoutUtil {
         return slots;
     }
 
-    static resolveLayout(count: number): { useLayout: boolean; slots: IHandCardLayoutSlot[] | null } {
+    static resolveSlots(count: number): IHandCardLayoutSlot[] {
         const n = Math.max(0, Math.min(count, BattleUtil.maxCardNum));
-        if (n <= this.LAYOUT_MAX_COUNT) {
-            return { useLayout: true, slots: null };
+        if (n <= 0) {
+            return [];
         }
-        if (n === 9) {
-            return {
-                useLayout: false,
-                slots: this.expandSymmetric(9, BattleUtil.cardPos9, BattleUtil.cardRot9),
-            };
-        }
-        return {
-            useLayout: false,
-            slots: this.expandSymmetric(10, BattleUtil.cardPos10, BattleUtil.cardRot10),
-        };
+        return this.expandSymmetric(
+            n,
+            BattleUtil.getCardPosByCount(n),
+            BattleUtil.getCardRotByCount(n),
+        );
     }
 
-    /** 对手牌节点应用布局（需传入 card/Layout 上的 Layout 组件） */
-    static apply(container: Node, layout: Layout | null, cardNodes: readonly Node[], count: number): void {
-        const plan = this.resolveLayout(count);
-        if (layout != null) {
-            layout.enabled = plan.useLayout;
-        }
-
-        if (plan.useLayout) {
-            for (const node of cardNodes) {
-                node.setRotationFromEuler(0, 0, 0);
-            }
-            layout?.updateLayout(true);
-            return;
-        }
-
-        const slots = plan.slots;
-        if (slots == null) {
-            return;
-        }
+    /** 对手牌节点应用 ConfigValue 坐标（直接挂在 card 节点下） */
+    static apply(_container: Node, cardNodes: readonly Node[], count: number): void {
+        const slots = this.resolveSlots(count);
         for (let i = 0; i < cardNodes.length; i++) {
             const slot = slots[i];
             const node = cardNodes[i];

@@ -18,18 +18,23 @@ export interface IGMConfigRow {
  * - 或以首词查表，其余词作为参数（如 addHandCard card_001 3）
  */
 export class GMCheatService {
-    private static normalizeId(raw: string): string {
-        return raw.trim().toLowerCase();
-    }
-
     private static getRowByInput(raw: string): IGMConfigRow | null {
-        const id = this.normalizeId(raw);
+        const id = raw.trim();
         if (!id) return null;
 
-        const row = ConfigReader.getDataById(GM_TABLE, id);
-        if (!row) return null;
+        const direct = ConfigReader.getDataById(GM_TABLE, id);
+        if (direct) return direct as IGMConfigRow;
 
-        return row as IGMConfigRow;
+        const table = ConfigReader.getDataTable(GM_TABLE);
+        if (!table) return null;
+
+        const lower = id.toLowerCase();
+        for (const [key, row] of pairs(table)) {
+            if (String(key).toLowerCase() === lower) {
+                return row as IGMConfigRow;
+            }
+        }
+        return null;
     }
 
     static has(raw: string): boolean {
@@ -44,7 +49,7 @@ export class GMCheatService {
 
         const resolved = this.resolveRow(raw);
         if (resolved == null) {
-            const direct = GMCheatActionRegistry.get(this.normalizeId(raw.trim()));
+            const direct = GMCheatActionRegistry.get(raw.trim());
             if (direct) {
                 direct();
                 return true;

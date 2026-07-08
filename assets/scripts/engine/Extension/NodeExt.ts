@@ -962,9 +962,9 @@ Node.prototype.loadTexture = function (res: string, callBack?, hideOnStart: bool
     if (indexPoint != -1) {
         fileName = fileName.substring(0, indexPoint);
     }
-    if (fileName == this.__resName) {
+    if (fileName == this.__resName && sprite.spriteFrame) {
         if (callBack) {
-            callBack(null, null);
+            callBack(null, sprite.spriteFrame);
         }
         return;
     }
@@ -978,20 +978,16 @@ Node.prototype.loadTexture = function (res: string, callBack?, hideOnStart: bool
         sprite.node.isLoadTexture = false;
     }
     loadResAsync(EBundleType.ui, res, SpriteFrame, (err, spriteFrame) => {
-        if (sprite && sprite.isValid) {
-            if (spriteFrame && this.__resName == spriteFrame.name) {
-                var oldFrame = sprite.spriteFrame;
-                sprite.spriteFrame = spriteFrame;
-                if (sprite.node.isLoadTexture) {
-                    ResCleaner.removeManualAssets(oldFrame)
-                }
-                sprite.node.isLoadTexture = true;
-                loadTextureDispos_sprite(sprite)
-                if (callBack) {
-                    callBack(err, spriteFrame);
-                }
-            } else {
-                ResCleaner.removeManualAssets(spriteFrame)
+        if (spriteFrame && sprite && sprite.isValid && this.__resName == spriteFrame.name) {
+            var oldFrame = sprite.spriteFrame;
+            sprite.spriteFrame = spriteFrame;
+            if (sprite.node.isLoadTexture) {
+                ResCleaner.removeManualAssets(oldFrame)
+            }
+            sprite.node.isLoadTexture = true;
+            loadTextureDispos_sprite(sprite)
+            if (callBack) {
+                callBack(null, spriteFrame);
             }
         } else {
             ResCleaner.removeManualAssets(spriteFrame)
@@ -1089,7 +1085,7 @@ Node.prototype.loadTextureNormal = function (res: string) {
     if (indexPoint != -1) {
         fileName = fileName.substring(0, indexPoint);
     }
-    if (fileName == this.__resNameNormal) {
+    if (fileName == this.__resNameNormal && button.normalSprite) {
         return;
     }
     this.__resNameNormal = fileName;
@@ -1123,7 +1119,7 @@ Node.prototype.loadTexturePressed = function (res: string) {
     if (indexPoint != -1) {
         fileName = fileName.substring(0, indexPoint);
     }
-    if (fileName == this.__resNamePressed) {
+    if (fileName == this.__resNamePressed && button.pressedSprite) {
         return;
     }
     this.__resNamePressed = fileName;
@@ -1155,7 +1151,7 @@ Node.prototype.loadTextureDisabled = function (res: string) {
     if (indexPoint != -1) {
         fileName = fileName.substring(0, indexPoint);
     }
-    if (fileName == this.__resNameDisabled) {
+    if (fileName == this.__resNameDisabled && button.disabledSprite) {
         return;
     }
     this.__resNameDisabled = fileName;
@@ -1188,7 +1184,7 @@ Node.prototype.loadTextureHover = function (res: string, type?: number) {
     if (indexPoint != -1) {
         fileName = fileName.substring(0, indexPoint);
     }
-    if (fileName == this.__resNameHover) {
+    if (fileName == this.__resNameHover && button.hoverSprite) {
         return;
     }
     this.__resNameHover = fileName;

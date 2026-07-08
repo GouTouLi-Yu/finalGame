@@ -7,12 +7,12 @@ export class GMCheatActionRegistry {
     private static _handlers = new Map<string, GMCheatActionHandler>();
 
     static register(action: string, handler: GMCheatActionHandler): void {
-        const key = action?.trim();
+        const key = action?.trim().toLowerCase();
         if (!key) return;
         this._handlers.set(key, handler);
     }
 
     static get(action: string): GMCheatActionHandler | undefined {
-        return this._handlers.get(action?.trim());
+        return this._handlers.get(action?.trim().toLowerCase());
     }
 }

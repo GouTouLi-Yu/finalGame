@@ -1,9 +1,9 @@
 import { _decorator, Component, profiler } from 'cc';
 import { DEV } from 'cc/env';
+import { GameConfig } from './game/config/GameConfig';
 import './engine/Extension/NodeExt';
 import { ConfigReader } from './frame/Data/ConfigReader';
 import { DevConfig } from './game/config/DevConfig';
-import { GameConfig } from './game/config/GameConfig';
 import './game/anim/AnimQualityClip';
 import './game/anim/AnimQualityHide';
 import './game/core/mvc/facade/battle/BattleFacade';

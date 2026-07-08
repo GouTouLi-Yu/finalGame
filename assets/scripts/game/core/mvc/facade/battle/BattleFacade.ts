@@ -185,7 +185,7 @@ export class BattleFacade extends Facade {
 
     /** 秘籍：删除从左到右第 n 张（1~10） */
     cheatRemoveHandAtPosition(oneBased: number): boolean {
-        if (this._session == null) {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null) {
             return false;
         }
         const card = this._session.deck.removeHandAtPosition(oneBased);
@@ -199,7 +199,7 @@ export class BattleFacade extends Facade {
 
     /** 秘籍：清空手牌（弃入弃牌堆） */
     cheatClearHand(): number {
-        if (this._session == null) {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null) {
             return 0;
         }
         const cards = this._session.deck.clearHand();
@@ -214,7 +214,7 @@ export class BattleFacade extends Facade {
 
     /** 秘籍：按 id 删除手牌中全部同名牌 */
     cheatRemoveHandByCardId(cardId: string): number {
-        if (this._session == null || !CardUtil.isValidCardId(cardId)) {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null || !CardUtil.isValidCardId(cardId)) {
             return 0;
         }
         const removed = this._session.deck.removeAllFromHandById(cardId);
