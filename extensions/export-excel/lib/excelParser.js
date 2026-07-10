@@ -41,14 +41,26 @@ class ExcelParser {
         return num;
     }
 
+    /**
+     * 去掉可选外层 []，再按逗号拆分。兼容 [100,330] 与 100,330。
+     */
+    splitArrayParts(value) {
+        let str = String(value).trim();
+        if (!str) return [];
+        if (str.startsWith('[') && str.endsWith(']')) {
+            str = str.slice(1, -1).trim();
+            if (!str) return [];
+        }
+        return str.split(',').map(s => s.trim()).filter(s => s !== '');
+    }
+
     parseNumberArray(value, fileName, sheetName, row, col, fieldName) {
         if (value === null || value === undefined || value === '') return [];
-        const str = String(value).trim();
-        if (!str) return [];
-        const parts = str.split(',');
+        const parts = this.splitArrayParts(value);
+        if (parts.length === 0) return [];
         const result = [];
         for (const part of parts) {
-            const num = parseFloat(part.trim());
+            const num = parseFloat(part);
             if (isNaN(num)) {
                 this.errorHandler.addArrayFormatError(fileName, sheetName, row, col, fieldName, 'number[]');
                 return [];
@@ -65,9 +77,99 @@ class ExcelParser {
 
     parseStringArray(value) {
         if (value === null || value === undefined || value === '') return [];
+        const parts = this.splitArrayParts(value);
+        return parts.map(s => {
+            // 兼容 ["a","b"]：去掉首尾引号
+            if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+                return s.slice(1, -1);
+            }
+            return s;
+        });
+    }
+
+    /**
+     * 拆分二维数组的「行」。
+     * 优先 JSON：[[1,2],[3,4]]；否则用分号分行： [1,2];[3,4] 或 1,2;3,4。
+     * @returns {string[]|null} 每行原始字符串；JSON 已解析成功时返回 null（由调用方直接用 parsed）
+     */
+    split2DRows(value) {
         const str = String(value).trim();
-        if (!str) return [];
-        return str.split(',').map(s => s.trim());
+        if (!str) return { rows: [], parsed: null };
+        if (str.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(str);
+                if (Array.isArray(parsed)) return { rows: null, parsed };
+            } catch {
+                // 非严格 JSON，走分号分行
+            }
+        }
+        const rows = str.split(';').map(s => s.trim()).filter(s => s !== '');
+        return { rows, parsed: null };
+    }
+
+    parseNumberArray2D(value, fileName, sheetName, row, col, fieldName) {
+        if (value === null || value === undefined || value === '') return [];
+        const { rows, parsed } = this.split2DRows(value);
+        if (parsed !== null) {
+            if (!Array.isArray(parsed)) {
+                this.errorHandler.addArrayFormatError(fileName, sheetName, row, col, fieldName, 'number[][]');
+                return [];
+            }
+            const result = [];
+            for (const item of parsed) {
+                if (!Array.isArray(item)) {
+                    this.errorHandler.addArrayFormatError(fileName, sheetName, row, col, fieldName, 'number[][]');
+                    return [];
+                }
+                const nums = [];
+                for (const n of item) {
+                    const num = typeof n === 'number' ? n : parseFloat(n);
+                    if (isNaN(num)) {
+                        this.errorHandler.addArrayFormatError(fileName, sheetName, row, col, fieldName, 'number[][]');
+                        return [];
+                    }
+                    nums.push(num);
+                }
+                result.push(nums);
+            }
+            return result;
+        }
+        const result = [];
+        for (const rowStr of rows) {
+            const parts = this.splitArrayParts(rowStr);
+            const nums = [];
+            for (const part of parts) {
+                const num = parseFloat(part);
+                if (isNaN(num)) {
+                    this.errorHandler.addArrayFormatError(fileName, sheetName, row, col, fieldName, 'number[][]');
+                    return [];
+                }
+                nums.push(num);
+            }
+            result.push(nums);
+        }
+        return result;
+    }
+
+    parseStringArray2D(value, fileName, sheetName, row, col, fieldName) {
+        if (value === null || value === undefined || value === '') return [];
+        const { rows, parsed } = this.split2DRows(value);
+        if (parsed !== null) {
+            if (!Array.isArray(parsed)) {
+                this.errorHandler.addArrayFormatError(fileName, sheetName, row, col, fieldName, 'string[][]');
+                return [];
+            }
+            const result = [];
+            for (const item of parsed) {
+                if (!Array.isArray(item)) {
+                    this.errorHandler.addArrayFormatError(fileName, sheetName, row, col, fieldName, 'string[][]');
+                    return [];
+                }
+                result.push(item.map(s => (s === null || s === undefined) ? '' : String(s)));
+            }
+            return result;
+        }
+        return rows.map(rowStr => this.parseStringArray(rowStr));
     }
 
     parseJson(value, fileName, sheetName, row, col, fieldName) {
@@ -118,10 +220,14 @@ class ExcelParser {
                 return this.parseNumber(value, fileName, sheetName, row, col, fieldName);
             case 'number[]':
                 return this.parseNumberArray(value, fileName, sheetName, row, col, fieldName);
+            case 'number[][]':
+                return this.parseNumberArray2D(value, fileName, sheetName, row, col, fieldName);
             case 'string':
                 return this.parseString(value);
             case 'string[]':
                 return this.parseStringArray(value);
+            case 'string[][]':
+                return this.parseStringArray2D(value, fileName, sheetName, row, col, fieldName);
             case 'json':
                 return this.parseJson(value, fileName, sheetName, row, col, fieldName);
             case 'jsonArr':
@@ -178,7 +284,7 @@ class ExcelParser {
      * 解析单个Sheet
      * 约定：
      * - A1：表名
-     * - 第2行：类型（从B列开始），支持 number | number[] | string | string[] | json | jsonArr | any
+     * - 第2行：类型（从B列开始），支持 number | number[] | number[][] | string | string[] | string[][] | json | jsonArr | any
      * - 第3行：字段名（从B列开始），须包含 id 列
      * - 第4行开始：数据行（可通过 A 列 start/end 标记调整范围）
      * - 第1行中标记为 $$ 的列不导出

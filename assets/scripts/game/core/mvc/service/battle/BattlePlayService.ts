@@ -2,7 +2,7 @@ import { ActionUtil } from '../../util/ActionUtil';
 import { BattleTargetUtil } from '../../util/BattleTargetUtil';
 import { CardUtil } from '../../util/CardUtil';
 import { BattleSession } from '../../model/battle/BattleSession';
-import { EChooseTarget } from '../../model/battle/EChooseTarget';
+import { EChooseTarget } from '../../model/battle/BattleEnums';
 import {
     EBattlePlayFail,
     IBattlePlayCardRequest,
@@ -13,11 +13,12 @@ import { ActionExecutor, IActionExecuteContext } from './ActionExecutor';
 /** 出牌流水线：校验 → 选目标 → 扣费 → 弃牌 → 效果 */
 export class BattlePlayService {
     static play(session: BattleSession, req: IBattlePlayCardRequest): IBattlePlayCardResult {
-        const { card, actorUnitId } = req;
+        const { card } = req;
+        const actorUnitId = req.actorUnitId ?? '';
         const cost = CardUtil.getManaPoint(card.id);
         const base: IBattlePlayCardResult = { ok: false, cardId: card.id, manaCost: cost, actorUnitId };
 
-        if (!session.field.canPlayCards(actorUnitId)) {
+        if (!actorUnitId || !session.field.canPlayCards(actorUnitId)) {
             return { ...base, reason: EBattlePlayFail.SILENCED };
         }
         if (!session.deck.hand.includes(card)) {

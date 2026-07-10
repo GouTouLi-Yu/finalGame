@@ -1,4 +1,5 @@
 import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
+import { UIManager } from '../../../../ui/UIManager';
 import { AreaViewMediator } from '../../../view/AreaViewMediator';
 import { MediatorHandleHelper } from '../../util/MediatorHandleHelper';
 
@@ -22,7 +23,7 @@ export class MainMenuMediator extends AreaViewMediator {
     }
 
     onClickStartBtn() {
-        console.log("倪好");
+        void UIManager.gotoView('AdventureView');
     }
 
     public onRegister(): void {

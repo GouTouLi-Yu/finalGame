@@ -3,7 +3,6 @@
  * 未包含 kos 的 TabButton、StarView、引导 GuideHelper、Spine；若需要可自行补组件后再合并原型方法。
  */
 import { approx, Asset, BlockInputEvents, Button, CacheMode, Color, EPSILON, EventTouch, Font, geometry, HorizontalTextAlignment, instantiate, Label, Layers, Mat3, Node, NodeEventType, Rect, RichText, Size, Sprite, SpriteFrame, Toggle, Tween, UIOpacity, UITransform, Vec2, Vec3, VerticalTextAlignment, VideoPlayer, warn, Widget } from "cc";
-import { MINIGAME, WECHAT } from "cc/env";
 import { EBundleType, ResManager } from "../../game/manager/ResManager";
 
 function isFunction(f: unknown): f is (...args: unknown[]) => unknown {
@@ -37,7 +36,12 @@ function loadResAsync(
 }
 
 const ResCleaner = {
-    addManualAssets(_a: Asset | null | undefined) { },
+    addManualAssets(asset: Asset | null | undefined) {
+        if (!asset) return;
+        try {
+            (asset as any).addRef?.();
+        } catch (_) { }
+    },
     removeManualAssets(asset: Asset | null | undefined) {
         if (!asset) return;
         try {
@@ -391,31 +395,31 @@ Node.prototype.convertToWorldSpace = function (nodePos: Vec3 | Vec2) {
 }
 
 Node.prototype.clone = function (): Node {
-    var dev = true
-    if (WECHAT || MINIGAME) {
-        dev = false
-    }
-    if (dev) {
-        this.getComponentsInChildren(Sprite).forEach(sprite => {
-            if (sprite.node.isLoadTexture && sprite.node != this) {
-                console.error("clone isLoadTexture", this)
-            }
-        })
-    }
-
     let clone = instantiate(this);
     clone._tag = this._tag;
     clone._zOrder = this._zOrder;
     clone._selfVisible = this._selfVisible;
     clone._task = this._task;
-    if (this.isLoadTexture) {
-        var sprite = clone.getComponent(Sprite)
-        if (sprite) {
-            clone.isLoadTexture = true
-            var spriteFrame = sprite.spriteFrame
-            ResCleaner.addManualAssets(spriteFrame)
-            loadTextureDispos_sprite(sprite)
+
+    // 根节点及子节点凡经 loadTexture 的，克隆后需同步引用计数与销毁回收
+    const srcSprites = this.getComponentsInChildren(Sprite);
+    const dstSprites = clone.getComponentsInChildren(Sprite);
+    const n = Math.min(srcSprites.length, dstSprites.length);
+    for (let i = 0; i < n; i++) {
+        const srcSprite = srcSprites[i];
+        const dstSprite = dstSprites[i];
+        if (srcSprite == null || dstSprite == null) {
+            continue;
         }
+        if (!srcSprite.node.isLoadTexture) {
+            continue;
+        }
+        dstSprite.node.isLoadTexture = true;
+        if (dstSprite.node.__resName == null && srcSprite.node.__resName != null) {
+            dstSprite.node.__resName = srcSprite.node.__resName;
+        }
+        ResCleaner.addManualAssets(dstSprite.spriteFrame);
+        loadTextureDispos_sprite(dstSprite);
     }
     return clone;
 }
@@ -985,6 +989,7 @@ Node.prototype.loadTexture = function (res: string, callBack?, hideOnStart: bool
                 ResCleaner.removeManualAssets(oldFrame)
             }
             sprite.node.isLoadTexture = true;
+            ResCleaner.addManualAssets(spriteFrame)
             loadTextureDispos_sprite(sprite)
             if (callBack) {
                 callBack(null, spriteFrame);

@@ -27,9 +27,27 @@ export class BattleSession {
     private _rng = new BattleRng(1);
     private _turnRuleProvider: IBattleTurnRuleProvider | null = null;
     private _armyId = '';
+    /** 等待玩家出牌的友方单位；null 表示当前不可手操出牌 */
+    private _pendingPlayerTurn: { unitId: string; slotIndex: number } | null = null;
 
     get mana(): number {
         return this._mana;
+    }
+
+    get pendingPlayerTurn(): { unitId: string; slotIndex: number } | null {
+        return this._pendingPlayerTurn;
+    }
+
+    get currentActorUnitId(): string | null {
+        return this._pendingPlayerTurn?.unitId ?? null;
+    }
+
+    setPendingPlayerTurn(unitId: string, slotIndex: number): void {
+        this._pendingPlayerTurn = { unitId, slotIndex };
+    }
+
+    clearPendingPlayerTurn(): void {
+        this._pendingPlayerTurn = null;
     }
 
     get roundNumber(): number {
@@ -155,6 +173,7 @@ export class BattleSession {
         this._rng = new BattleRng(1);
         this._turnRuleProvider = null;
         this._armyId = '';
+        this._pendingPlayerTurn = null;
     }
 
     private mergeOverride(...parts: (IBattleTurnOverride | null | undefined)[]): IBattleTurnOverride {

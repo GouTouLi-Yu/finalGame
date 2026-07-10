@@ -1,4 +1,4 @@
-import { EChooseTarget } from '../model/battle/EChooseTarget';
+import { EChooseTarget } from '../model/battle/BattleEnums';
 import { BattleRng } from '../model/battle/BattleRng';
 
 export class BattleTargetUtil {

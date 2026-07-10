@@ -21,7 +21,8 @@ export interface IBeginBattleOptions {
 
 export interface IBattlePlayCardRequest {
     card: Card;
-    actorUnitId: string;
+    /** 可省略：UI 出牌时默认取当前玩家回合单位 */
+    actorUnitId?: string;
     /** 未传且 chooseTarget≠none 时由 play 服务随机合法目标 */
     chosenTargetId?: string | null;
 }

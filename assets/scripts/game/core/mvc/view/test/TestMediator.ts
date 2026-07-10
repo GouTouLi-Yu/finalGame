@@ -36,7 +36,7 @@ export class TestMediator extends AreaViewMediator {
 
     public setupView(_data?: any): void {
         console.log(Strings.get("TRANS_HERO_NAME_001"));
-        UIManager.gotoView("BattleView");
+        UIManager.gotoView("AdventureView");
     }
 
 

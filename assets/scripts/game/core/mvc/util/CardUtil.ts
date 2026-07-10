@@ -13,13 +13,19 @@ const MAX_QUALITY = 4;
 /** CardConfig.params：值为固定数或按等级下标的数组 */
 export type ICardParams = Record<string, number | number[]>;
 
+/** 卡牌描述类型：战斗手牌用 brief，详情弹窗用 detailed */
+export type CardDescKind = 'brief' | 'detailed';
+
 /** CardConfig 行（与配表字段一致） */
 export interface ICardConfigRow {
     id: string;
     manaPoint?: number;
     name?: string;
     iconName?: string;
-    desc?: string;
+    /** 简单描述（战斗界面） */
+    briefDesc?: string;
+    /** 详细描述（卡牌详情） */
+    detailedDesc?: string;
     elem1?: string;
     elem2?: string;
     isResonance?: string | number | boolean;
@@ -149,13 +155,17 @@ export class CardUtil {
         return Strings.get(this.getCfg(cardId)?.name ?? '');
     }
 
-    /** 描述文案；level 传入时会注入 params 占位符（如 ${dmgRate}） */
-    static getDisplayDesc(cardId: string, level?: number): string {
+    /**
+     * 描述文案；默认 briefDesc。
+     * level 传入时会注入 params 占位符（如 ${dmgRate}）
+     */
+    static getDisplayDesc(cardId: string, level?: number, kind: CardDescKind = 'brief'): string {
         const cfg = this.getCfg(cardId);
         if (cfg == null) {
             return '';
         }
+        const key = kind === 'detailed' ? (cfg.detailedDesc ?? '') : (cfg.briefDesc ?? '');
         const params = level != null ? this.getParams(cardId, level) : undefined;
-        return Strings.get(cfg.desc ?? '', params);
+        return Strings.get(key, params);
     }
 }

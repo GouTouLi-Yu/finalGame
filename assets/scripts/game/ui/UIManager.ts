@@ -48,7 +48,7 @@ export interface IUIManagerGotoOptions {
      * 自定义 overrideParent 时不自动加遮罩（避免未知层级结构）。
      */
     showPopupMask?: boolean;
-    /** 遮罩不透明度 0–255，默认 160 */
+    /** 弹窗遮罩透明度 0~255，默认 160 */
     popupMaskAlpha?: number;
 }
 
@@ -57,6 +57,9 @@ export class UIManager {
     private static _canvas: Node | null = null;
     private static _areaLayer: Node | null = null;
     private static _popupLayer: Node | null = null;
+    /** 预实例化但未激活的 area 界面（秒进用） */
+    private static _prewarmedViews = new Map<string, Node>();
+    private static _prewarming = new Map<string, Promise<Node | null>>();
 
     static init() {
         if (this._inited) return;
@@ -145,6 +148,10 @@ export class UIManager {
         const children = this._areaLayer.children.slice();
         for (const child of children) {
             if (!child || !child.isValid) continue;
+            // 预热隐藏节点留给秒进，不在此销毁
+            if (!child.active && this.isPrewarmedNode(child)) {
+                continue;
+            }
             const med = (child as any).mediator;
             try {
                 if (med && typeof med.dismiss === 'function' && !med._dismissed) {
@@ -154,6 +161,85 @@ export class UIManager {
                 console.warn('[UIManager] dismiss area view failed', e);
             }
             child.destroy();
+        }
+    }
+
+    private static isPrewarmedNode(node: Node): boolean {
+        for (const n of this._prewarmedViews.values()) {
+            if (n === node) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 后台预实例化 area 界面（active=false 挂在 area 层）。
+     * 内存主要是节点树；贴图仍由资源预载决定。离开冒险未进战时 {@link discardPrewarmedView}。
+     */
+    static async prewarmView(viewId: string): Promise<Node | null> {
+        this.init();
+        if (!this.ensureBuiltinLayers()) {
+            return null;
+        }
+        const existing = this._prewarmedViews.get(viewId);
+        if (existing?.isValid) {
+            return existing;
+        }
+        const inflight = this._prewarming.get(viewId);
+        if (inflight) {
+            return inflight;
+        }
+
+        const task = this.doPrewarmView(viewId);
+        this._prewarming.set(viewId, task);
+        try {
+            return await task;
+        } finally {
+            this._prewarming.delete(viewId);
+        }
+    }
+
+    private static async doPrewarmView(viewId: string): Promise<Node | null> {
+        const resolved = resolveViewPathForViewId(viewId);
+        if (!resolved || resolved.kind !== 'area') {
+            console.warn(`[UIManager] prewarm 仅支持 area 界面: ${viewId}`);
+            return null;
+        }
+        const MediatorClass = ClassConfig.getClass(resolved.mediatorKey);
+        const mm = Injector.shared.getInstanceOnlyRead('MediatorMap') as MediatorMap;
+        mm.mapView(resolved.viewId, resolved.mediatorKey, true, true);
+
+        let prefabAsset: Prefab;
+        try {
+            prefabAsset = (await ResManager.loadAsset(resolved.bundle, resolved.prefab, Prefab)) as Prefab;
+        } catch (e) {
+            logPrefabConventionMismatch(viewId, MediatorClass ?? null, resolved, e);
+            return null;
+        }
+
+        const raced = this._prewarmedViews.get(viewId);
+        if (raced?.isValid) {
+            return raced;
+        }
+
+        const root = instantiate(prefabAsset);
+        (root as any).getViewName = () => resolved.viewId;
+        root.name = `${resolved.layerName}__prewarm`;
+        root.active = false;
+        LocalizedTextBinder.bindDeep(root);
+        this._areaLayer!.addChild(root);
+        this._prewarmedViews.set(viewId, root);
+        console.log(`[UIManager] 已预实例化 ${viewId}`);
+        return root;
+    }
+
+    /** 丢弃预热实例（未打开过时调用） */
+    static discardPrewarmedView(viewId: string): void {
+        const node = this._prewarmedViews.get(viewId);
+        this._prewarmedViews.delete(viewId);
+        if (node?.isValid) {
+            node.destroy();
         }
     }
 
@@ -271,21 +357,44 @@ export class UIManager {
         const resolved = resolveViewPathForViewId(viewId);
         if (!resolved) return null;
 
-        if (resolved.kind === 'area' && this.shouldReplaceAreaLayer(viewId, options)) {
-            this.clearAreaLayer();
-        }
-
         const MediatorClass = ClassConfig.getClass(resolved.mediatorKey);
 
         const mm = Injector.shared.getInstanceOnlyRead('MediatorMap') as MediatorMap;
         mm.mapView(resolved.viewId, resolved.mediatorKey, true, true);
 
+        // 秒进：使用预实例化节点（跳过再次 load/instantiate）
+        const prewarmed = this._prewarmedViews.get(viewId);
+        if (prewarmed?.isValid && resolved.kind === 'area' && overrideParent == null) {
+            // 先清旧界面（此时仍在 prewarm 表里，clear 会跳过它），再取出激活
+            if (this.shouldReplaceAreaLayer(viewId, options)) {
+                this.clearAreaLayer();
+            }
+            this._prewarmedViews.delete(viewId);
+            if (!prewarmed.isValid) {
+                console.warn(`[UIManager] 预热节点在清理后失效: ${viewId}`);
+            } else {
+                prewarmed.active = true;
+                prewarmed.name = resolved.layerName;
+                prewarmed.setSiblingIndex(this._areaLayer!.children.length - 1);
+                LocalizedTextBinder.bindDeep(prewarmed);
+                const preMediator = mm.createMediator(prewarmed);
+                preMediator?.enterWithData?.(data);
+                LocalizedTextBinder.refreshDeep(prewarmed);
+                return prewarmed;
+            }
+        }
+
+        // 先加载预制体，再清旧界面，避免 area 切换时空窗黑屏
         let prefabAsset: Prefab;
         try {
             prefabAsset = (await ResManager.loadAsset(resolved.bundle, resolved.prefab, Prefab)) as Prefab;
         } catch (e) {
             logPrefabConventionMismatch(viewId, MediatorClass ?? null, resolved, e);
             return null;
+        }
+
+        if (resolved.kind === 'area' && this.shouldReplaceAreaLayer(viewId, options)) {
+            this.clearAreaLayer();
         }
 
         const root = instantiate(prefabAsset);

@@ -1,6 +1,6 @@
 import { IBattleUnitTurnEvent, IBattleUnitTurnSnapshot } from 'db://assets/scripts/game/core/mvc/model/battle/BattleActionBarModel';
 import { EBattlePlayFail } from 'db://assets/scripts/game/core/mvc/model/battle/BattleTypes';
-import { EBattleSide } from 'db://assets/scripts/game/core/mvc/model/battle/EBattleSide';
+import { EBattleSide } from 'db://assets/scripts/game/core/mvc/model/battle/BattleEnums';
 import { BattleUtil } from 'db://assets/scripts/game/core/mvc/util/BattleUtil';
 import { CardUtil } from 'db://assets/scripts/game/core/mvc/util/CardUtil';
 

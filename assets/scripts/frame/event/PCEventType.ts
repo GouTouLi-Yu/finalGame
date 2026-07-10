@@ -36,6 +36,9 @@ export const PCEventType = {
     /** 战斗手牌变更（增删/出牌后）；BattleView 监听刷新 */
     EVT_BATTLE_HAND_CHANGED: EventTypeUtil.id('EVT_BATTLE_HAND_CHANGED'),
 
+    /** 战斗玩家可操作回合变更；payload: { unitId: string | null, slotIndex: number | null } */
+    EVT_BATTLE_PLAYER_TURN_CHANGED: EventTypeUtil.id('EVT_BATTLE_PLAYER_TURN_CHANGED'),
+
     /** 动画画质切换；payload: { level: AnimQualityLevel } */
     EVT_ANIM_QUALITY_CHANGED: EventTypeUtil.id('EVT_ANIM_QUALITY_CHANGED'),
 };

@@ -39,15 +39,32 @@ export const ANIM_QUALITY_CLIP_NAMES: Record<AnimQualityLevel, string> = {
     [AnimQualityLevel.Low]: 'animClip_low',
 };
 
-/** 按当前 Animation 已挂载 clip 解析实际应播放的 clip 名（两档动画低画质回落到中档） */
+/**
+ * true：三档都播最高档 animClip（抽帧 mid/low 资源与工具链保留，暂不启用）。
+ * false：按档位选 animClip / animClip_mid / animClip_low。
+ */
+export const ANIM_QUALITY_FORCE_HIGH_CLIP = true;
+
+/** 按当前 Animation 已挂载 clip 解析实际应播放的 clip 名 */
 export function resolveAnimQualityClipName(
     clipNames: ReadonlyArray<string | undefined>,
     level: AnimQualityLevel,
 ): string | null {
+    if (ANIM_QUALITY_FORCE_HIGH_CLIP) {
+        if (clipNames.includes(ANIM_QUALITY_CLIP_NAMES[AnimQualityLevel.High])) {
+            return ANIM_QUALITY_CLIP_NAMES[AnimQualityLevel.High];
+        }
+        if (clipNames.includes('animClip')) {
+            return 'animClip';
+        }
+        return null;
+    }
+
     const preferred = ANIM_QUALITY_CLIP_NAMES[level];
     if (clipNames.includes(preferred)) {
         return preferred;
     }
+    // 两档资源：低档回落到中档
     if (level === AnimQualityLevel.Low && clipNames.includes(ANIM_QUALITY_CLIP_NAMES[AnimQualityLevel.Mid])) {
         return ANIM_QUALITY_CLIP_NAMES[AnimQualityLevel.Mid];
     }

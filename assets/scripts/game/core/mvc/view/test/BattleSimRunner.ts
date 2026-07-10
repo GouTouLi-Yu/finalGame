@@ -1,7 +1,7 @@
 import { BattleFacade } from '../../facade/battle/BattleFacade';
 import { IBattleUnitTurnEvent, IBattleUnitTurnSnapshot } from '../../model/battle/BattleActionBarModel';
 import { BattleSession } from '../../model/battle/BattleSession';
-import { EBattleSide } from '../../model/battle/EBattleSide';
+import { EBattleSide } from '../../model/battle/BattleEnums';
 import { TestAutoPlayPolicy } from '../../policy/battle/IAutoPlayPolicy';
 import { Card } from '../../model/card/Card';
 import { Player } from '../../model/Player/Player';
@@ -62,7 +62,7 @@ export class BattleSimRunner {
             ...enemyIds.map((id, i) => ({
                 side: 'enemy' as const,
                 slotIndex: i,
-                unitId: id,
+                unitId: ArmyUtil.makeEnemyInstanceId(id, i),
                 speed: EnemyUtil.getSpeed(id),
             })),
         ]);

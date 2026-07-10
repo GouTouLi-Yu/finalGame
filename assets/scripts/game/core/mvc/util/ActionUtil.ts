@@ -1,5 +1,5 @@
 import { ConfigReader } from 'db://assets/scripts/frame/Data/ConfigReader';
-import { EChooseTarget } from '../model/battle/EChooseTarget';
+import { EChooseTarget } from '../model/battle/BattleEnums';
 
 const TABLE = 'ActionConfig';
 

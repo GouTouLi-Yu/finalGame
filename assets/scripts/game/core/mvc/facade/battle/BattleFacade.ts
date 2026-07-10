@@ -3,6 +3,7 @@ import { ClassConfig } from 'db://assets/scripts/frame/Injector/ClassConfig';
 import { PCEventType } from 'db://assets/scripts/frame/event/PCEventType';
 import { IBattleUnitTurnEvent } from 'db://assets/scripts/game/core/mvc/model/battle/BattleActionBarModel';
 import { IBattleHandChangedPayload } from 'db://assets/scripts/game/core/mvc/model/battle/BattleHandEvents';
+import { IBattlePlayerTurnChangedPayload } from 'db://assets/scripts/game/core/mvc/model/battle/BattlePlayerTurnEvents';
 import { BattleSession } from 'db://assets/scripts/game/core/mvc/model/battle/BattleSession';
 import { IBeginBattleOptions, IBattlePlayCardRequest, IBattlePlayCardResult } from 'db://assets/scripts/game/core/mvc/model/battle/BattleTypes';
 import { Card } from 'db://assets/scripts/game/core/mvc/model/card/Card';
@@ -48,6 +49,15 @@ export class BattleFacade extends Facade {
         return this._session?.field ?? null;
     }
 
+    /** 当前等待玩家出牌的友方 unitId；无可操作回合时为 null */
+    get currentActorUnitId(): string | null {
+        return this._session?.currentActorUnitId ?? null;
+    }
+
+    get isWaitingPlayerTurn(): boolean {
+        return this._session?.pendingPlayerTurn != null;
+    }
+
     setAdventurePort(port: IAdventureBattlePort): void {
         this._adventurePort = port;
     }
@@ -61,13 +71,20 @@ export class BattleFacade extends Facade {
     }
 
     /**
-     * 开发用手牌测试：无 Session 时创建一场空库战斗（1 张占位在抽牌堆，手牌 0）。
+     * 开发用手牌测试：无 Session 时创建一场测试战斗。
+     * 若编队为空则临时塞 4 个友方，便于进玩家回合测拖拽出牌。
      */
     opEnsureDevHandTestBattle(): boolean {
         if (this._session?.isActive) {
             return true;
         }
         const deploy = this._adventurePort.getDeployModel();
+        if (deploy.getActiveCombatants().length === 0) {
+            const speeds = [200, 100, 150, 120];
+            for (let i = 0; i < 4; i++) {
+                deploy.assignHeroToActive(i, `hero_${i + 1}`, speeds[i], 1);
+            }
+        }
         const enemyIds = ArmyUtil.getEnemyIds('army_test');
         const session = new BattleSession();
         session.begin(
@@ -79,6 +96,7 @@ export class BattleFacade extends Facade {
         );
         session.onRoundStart();
         this._session = session;
+        this.notifyPlayerTurnChanged();
         return true;
     }
 
@@ -108,23 +126,48 @@ export class BattleFacade extends Facade {
         session.begin(cards, deploy, enemyIds, (id) => EnemyUtil.getSpeed(id), { ...options, armyId });
         session.onRoundStart();
         this._session = session;
+        this.notifyPlayerTurnChanged();
         return true;
     }
 
-    /** 跑条推进一步 */
+    /**
+     * 跑条推进一步。
+     * 若进入友方玩家回合，会停在等待状态，需玩家出牌后 {@link opEndPlayerTurn} 再继续。
+     * 测试/自动战斗可传 `autoPlayPolicy` 跳过等待。
+     */
     opAdvanceActionBar(options?: IAdvanceActionBarOptions): IBattleUnitTurnEvent[] {
         if (this._session == null) {
             return [];
         }
-        return BattleTurnOrchestrator.advance(this._session, this._autoPlayPolicy, options);
+        const events = BattleTurnOrchestrator.advance(this._session, this._autoPlayPolicy, options);
+        this.notifyPlayerTurnChanged();
+        this.notifyHandChanged();
+        return events;
     }
 
-    /** 手点出牌（UI 调此入口） */
+    /** 结束当前玩家单位回合，允许跑条继续推进 */
+    opEndPlayerTurn(): boolean {
+        if (this._session == null) {
+            return false;
+        }
+        const ok = BattleTurnOrchestrator.finishPlayerTurn(this._session);
+        if (ok) {
+            this.notifyPlayerTurnChanged();
+            this.notifyHandChanged();
+        }
+        return ok;
+    }
+
+    /** 手点出牌（UI 调此入口）；actorUnitId 可省略，默认当前玩家回合单位 */
     opPlayCard(req: IBattlePlayCardRequest): IBattlePlayCardResult {
         if (this._session == null) {
             return { ok: false, manaCost: 0, reason: 'not_in_battle' };
         }
-        const res = BattlePlayService.play(this._session, req);
+        const actorUnitId = req.actorUnitId || this._session.currentActorUnitId;
+        if (actorUnitId == null || actorUnitId === '') {
+            return { ok: false, manaCost: 0, reason: 'not_player_turn', cardId: req.card.id };
+        }
+        const res = BattlePlayService.play(this._session, { ...req, actorUnitId });
         if (res.ok) {
             this.notifyHandChanged();
         }
@@ -245,6 +288,7 @@ export class BattleFacade extends Facade {
         const cards = this._session.endAndCollectCards();
         this._adventurePort.restoreCardsFromBattle(cards);
         this._session = null;
+        this.notifyPlayerTurnChanged();
         this.notifyHandChanged();
     }
 
@@ -253,6 +297,15 @@ export class BattleFacade extends Facade {
             handCount: this._session?.deck.hand.length ?? 0,
         };
         this.dispatch(PCEventType.EVT_BATTLE_HAND_CHANGED, payload);
+    }
+
+    private notifyPlayerTurnChanged(): void {
+        const pending = this._session?.pendingPlayerTurn ?? null;
+        const payload: IBattlePlayerTurnChangedPayload = {
+            unitId: pending?.unitId ?? null,
+            slotIndex: pending?.slotIndex ?? null,
+        };
+        this.dispatch(PCEventType.EVT_BATTLE_PLAYER_TURN_CHANGED, payload);
     }
 }
 

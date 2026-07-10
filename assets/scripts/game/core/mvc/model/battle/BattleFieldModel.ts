@@ -1,5 +1,6 @@
 import { AdventureDeployModel } from '../adventure/AdventureDeployModel';
-import { EBattleSide } from './EBattleSide';
+import { ArmyUtil } from '../../util/ArmyUtil';
+import { EBattleSide } from './BattleEnums';
 
 /** 场上单位运行时（hp/属性以后在此扩展） */
 export interface IBattleUnitRuntime {
@@ -54,15 +55,16 @@ export class BattleFieldModel {
             });
         }
         for (let i = 0; i < enemyIds.length; i++) {
-            const id = enemyIds[i];
-            if (!id) {
+            const configId = enemyIds[i];
+            if (!configId) {
                 continue;
             }
-            this._units.set(id, {
-                unitId: id,
+            const unitId = ArmyUtil.makeEnemyInstanceId(configId, i);
+            this._units.set(unitId, {
+                unitId,
                 side: EBattleSide.Enemy,
                 slotIndex: i,
-                speed: enemySpeedOf(id),
+                speed: enemySpeedOf(configId),
                 silenced: false,
                 outOfControlPlayCount: 0,
             });
