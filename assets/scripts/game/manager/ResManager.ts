@@ -57,6 +57,18 @@ export class ResManager {
         return p;
     }
 
+    /** 同步窥探已缓存资源（不增加 refs）；未命中返回 null */
+    static peekAsset<T extends Asset>(
+        bundleType: EBundleType,
+        path: string,
+        type?: { new(...args: any[]): T } | any,
+    ): T | null {
+        const normalizedPath = this._normalizePath(path, type);
+        const key = this._assetKey(bundleType, normalizedPath);
+        const cached = this._assetCache.get(key);
+        return (cached?.asset as T) ?? null;
+    }
+
     static loadAsset(bundleType: EBundleType, path: string): Promise<Asset>;
     static loadAsset<T extends Asset>(bundleType: EBundleType, path: string, type: { new(...args: any[]): T } | any): Promise<T>;
     static loadAsset<T extends Asset>(bundleType: EBundleType, path: string, type?: { new(...args: any[]): T } | any): Promise<T> {

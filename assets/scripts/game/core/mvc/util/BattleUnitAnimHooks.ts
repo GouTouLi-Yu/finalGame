@@ -2,8 +2,9 @@ import { EBattleAnimAction } from '../../../anim/BattleAnimCatalog';
 import type { BattleUnitAnimPlayer } from './BattleUnitAnimPlayer';
 
 /**
- * 战斗单位施法动画钩子。
- * 绑定 {@link BattleUnitAnimPlayer} 后真正播；未绑定则只打日志。
+ * 拖牌：prepStart（1次）→ prepIdle（循环）
+ * 打出成功：usingMagic（1次）→ idle（循环）
+ * 收回/失败：prepBack（1次）→ idle（循环）
  */
 export class BattleUnitAnimHooks {
     private static _player: BattleUnitAnimPlayer | null = null;
@@ -12,27 +13,55 @@ export class BattleUnitAnimHooks {
         this._player = player;
     }
 
-    /** 预备抬手：对敌 1 / 对己 2（资源名未齐前仍走日志） */
-    static playPrepRaise(unitId: string, slotIndex: number, towardEnemy: boolean): void {
-        const action = towardEnemy ? 'prepRaise1' : 'prepRaise2';
-        console.log(`[战场动画] TODO ${action} unit=${unitId} slot=${slotIndex}`);
+    static playPrepStartChain(unitId: string, _slotIndex: number, _towardEnemy: boolean): void {
+        if (this._player == null) {
+            console.warn('[战场动画] player 未绑定，无法播 prepStart');
+            return;
+        }
+        console.log(`[战场动画] 拖牌 prepStart→prepIdle unit=${unitId}`);
+        void this._player.playThen(unitId, EBattleAnimAction.PrepStart, EBattleAnimAction.PrepIdle);
     }
 
-    static playPrepIdle(unitId: string, slotIndex: number, towardEnemy: boolean = true): void {
-        const action = towardEnemy ? 'prepIdle1' : 'prepIdle2';
-        console.log(`[战场动画] TODO ${action} unit=${unitId} slot=${slotIndex}`);
+    static playPrepRaise(unitId: string, slotIndex: number, towardEnemy: boolean): void {
+        this.playPrepStartChain(unitId, slotIndex, towardEnemy);
+    }
+
+    static playPrepIdle(unitId: string, _slotIndex: number, _towardEnemy: boolean = true): void {
+        void this._player?.play(unitId, EBattleAnimAction.PrepIdle);
+    }
+
+    static playPrepBack(unitId: string, _slotIndex: number, _towardEnemy: boolean = true): void {
+        if (this._player == null) {
+            console.warn('[战场动画] player 未绑定，无法播 prepBack');
+            return;
+        }
+        console.log(`[战场动画] 收回 prepBack→idle unit=${unitId}`);
+        void this._player.playThen(unitId, EBattleAnimAction.PrepBack, EBattleAnimAction.Idle);
     }
 
     static playPrepCancel(unitId: string, slotIndex: number, towardEnemy: boolean = true): void {
-        const action = towardEnemy ? 'prepCancel1' : 'prepCancel2';
-        console.log(`[战场动画] TODO ${action} unit=${unitId} slot=${slotIndex}`);
+        this.playPrepBack(unitId, slotIndex, towardEnemy);
     }
 
-    static playHurt(unitId: string, slotIndex: number): void {
+    static playUsingMagic(unitId: string, _slotIndex: number): void {
+        if (this._player == null) {
+            console.warn('[战场动画] player 未绑定，无法播 usingMagic');
+            return;
+        }
+        console.log(`[战场动画] 出牌 usingMagic→idle unit=${unitId}`);
+        void this._player.playThen(unitId, EBattleAnimAction.UsingMagic, EBattleAnimAction.Idle);
+    }
+
+    /** @deprecated 使用 {@link playUsingMagic} */
+    static playOther1(unitId: string, slotIndex: number): void {
+        this.playUsingMagic(unitId, slotIndex);
+    }
+
+    static playHurt(unitId: string, _slotIndex: number): void {
         void this._player?.play(unitId, EBattleAnimAction.Hurt);
     }
 
-    static playDie(unitId: string, slotIndex: number): void {
+    static playDie(unitId: string, _slotIndex: number): void {
         void this._player?.play(unitId, EBattleAnimAction.Die);
     }
 

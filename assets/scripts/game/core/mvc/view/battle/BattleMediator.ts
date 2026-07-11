@@ -12,6 +12,7 @@ import { BattleHandAimFxBinder } from '../../util/BattleHandAimFxBinder';
 import { BattleHandCardLayoutUtil } from '../../util/BattleHandCardLayoutUtil';
 import { BattleUnitAnimHooks } from '../../util/BattleUnitAnimHooks';
 import { BattleUnitAnimPlayer } from '../../util/BattleUnitAnimPlayer';
+import { BattleEnemyInfoBinder } from '../../util/BattleEnemyInfoBinder';
 import { BattleSeqBarBinder } from '../../util/BattleSeqBarBinder';
 import { BattleUnitSlotBinder } from '../../util/BattleUnitSlotBinder';
 import { BattleUtil } from '../../util/BattleUtil';
@@ -62,6 +63,7 @@ export class BattleMediator extends AreaViewMediator {
     private _handTouchBound = false;
     private _unitBinder = new BattleUnitSlotBinder();
     private _seqBarBinder = new BattleSeqBarBinder();
+    private _enemyInfoBinder = new BattleEnemyInfoBinder();
     private _animPlayer = new BattleUnitAnimPlayer();
     private _aimFx = new BattleHandAimFxBinder();
     private _drag: IHandDragState | null = null;
@@ -69,6 +71,15 @@ export class BattleMediator extends AreaViewMediator {
 
     private _onHandChanged = (): void => {
         if (this._drag != null) {
+            const actorId = BattleFacade.getInstance().currentActorUnitId;
+            const slot = actorId != null ? this._unitBinder.getSlotByUnitId(actorId) : null;
+            if (actorId != null && slot != null && this._drag.dragging) {
+                BattleUnitAnimHooks.playPrepBack(
+                    actorId,
+                    slot.slotIndex,
+                    this._drag.chooseTarget !== EChooseTarget.Self,
+                );
+            }
             this.cancelDragVisual(false);
         }
         this.refreshHandFromBattle();
@@ -78,6 +89,10 @@ export class BattleMediator extends AreaViewMediator {
         const actor = BattleFacade.getInstance().currentActorUnitId;
         console.log(`[手牌] 当前状态：玩家回合行动者=${actor ?? '无'}`);
         this.refreshSeqBar(true);
+    };
+
+    private _onEnemyInfoChanged = (): void => {
+        this.refreshEnemyInfo();
     };
 
     public initialize(..._any: any[]): void { }
@@ -94,12 +109,14 @@ export class BattleMediator extends AreaViewMediator {
     public onRemove(): void {
         this.unmapEventListener(PCEventType.EVT_BATTLE_HAND_CHANGED, this, this._onHandChanged);
         this.unmapEventListener(PCEventType.EVT_BATTLE_PLAYER_TURN_CHANGED, this, this._onPlayerTurnChanged);
+        this.unmapEventListener(PCEventType.EVT_BATTLE_ENEMY_INFO_CHANGED, this, this._onEnemyInfoChanged);
         if (DevConfig.isGMAllowed()) {
             input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         }
         this.unbindGlobalDragInput();
         this.cancelDragVisual(false);
         this._aimFx.dispose();
+        this._enemyInfoBinder.dispose();
         BattleUnitAnimHooks.bindPlayer(null);
         this._handCardNodes = [];
         this._handTouchBound = false;
@@ -116,12 +133,14 @@ export class BattleMediator extends AreaViewMediator {
         this.ensureHandCardPool();
         this.bindHandCardTouches();
         this._seqBarBinder.bind(this.view);
+        this._enemyInfoBinder.bind(this.view);
     }
 
     public mapEventListeners(): void {
         MediatorHandleHelper.setUpBtnHandle(this, this.BtnHandles);
         this.mapEventListener(PCEventType.EVT_BATTLE_HAND_CHANGED, this, this._onHandChanged);
         this.mapEventListener(PCEventType.EVT_BATTLE_PLAYER_TURN_CHANGED, this, this._onPlayerTurnChanged);
+        this.mapEventListener(PCEventType.EVT_BATTLE_ENEMY_INFO_CHANGED, this, this._onEnemyInfoChanged);
     }
 
     public enterWithData(_data?: any): void {
@@ -139,13 +158,24 @@ export class BattleMediator extends AreaViewMediator {
         this.advanceToPlayerTurn();
         this.refreshHandFromBattle();
         this.refreshSeqBar();
-        void this._animPlayer.playIdleAll();
+        this.refreshEnemyInfo();
+        // 先预载 prep/other，再挂 idle，保证拖牌/收回能同步切到动画
+        void (async () => {
+            await this._animPlayer.preloadAllyBattleAnims();
+            await this._animPlayer.playIdleAll();
+            console.log('[战场动画] 全员 idle 就绪');
+        })();
         console.log('[手牌] 操作说明：点击看详情；拖出手牌区出牌；需目标则拖到单位上松手');
     }
 
     /** 刷新行动条 seq1~8；animate=true 时左侧滑出、右侧左挤 */
     refreshSeqBar(animate = false): void {
         this._seqBarBinder.refresh(BattleFacade.getInstance().session, animate);
+    }
+
+    /** 刷新敌人头顶 HP / 脆弱 / Buff / 元素印记 */
+    refreshEnemyInfo(): void {
+        this._enemyInfoBinder.refresh(BattleFacade.getInstance().fieldModel);
     }
 
     /** 按当前战斗 Session 手牌刷新 UI（复用节点：显隐 / 刷数据 / 摆位） */
@@ -421,11 +451,20 @@ export class BattleMediator extends AreaViewMediator {
         );
 
         const actorId = BattleFacade.getInstance().currentActorUnitId;
-        const slot = actorId != null ? this._unitBinder.getSlotByUnitId(actorId) : null;
-        if (actorId != null && slot != null) {
-            BattleUnitAnimHooks.playPrepRaise(actorId, slot.slotIndex, drag.chooseTarget !== EChooseTarget.Self);
-            BattleUnitAnimHooks.playPrepIdle(actorId, slot.slotIndex, drag.chooseTarget !== EChooseTarget.Self);
+        if (actorId == null) {
+            console.warn('[战场动画] 拖牌开始但无当前行动者，跳过预备动画');
+            return;
         }
+        // 不依赖 touchLayer 槽位：Player 只需要 unitId
+        const unit = BattleFacade.getInstance().fieldModel?.getUnit(actorId);
+        const slotIndex = unit?.slotIndex
+            ?? this._unitBinder.getSlotByUnitId(actorId)?.slotIndex
+            ?? 0;
+        BattleUnitAnimHooks.playPrepStartChain(
+            actorId,
+            slotIndex,
+            drag.chooseTarget !== EChooseTarget.Self,
+        );
     }
 
     private updateAimVisual(drag: IHandDragState, uiX: number, uiY: number): void {
@@ -522,12 +561,16 @@ export class BattleMediator extends AreaViewMediator {
         const facade = BattleFacade.getInstance();
         const needTarget = chooseTarget !== EChooseTarget.None;
         const targetTypeLabel = this.chooseTargetLabel(chooseTarget);
+        const towardEnemy = chooseTarget !== EChooseTarget.Self;
+        const wasDragging = drag.dragging;
+        // 先清拖拽，避免 opPlayCard 触发手牌刷新时误播 prepBack
+        this.cancelDragVisual(true);
+
         const res = facade.opPlayCard({
             card: drag.card,
             actorUnitId: actorId,
             chosenTargetId: targetId,
         });
-        this.cancelDragVisual(true);
 
         if (!res.ok) {
             this.logPlayResult({
@@ -540,9 +583,8 @@ export class BattleMediator extends AreaViewMediator {
                 targetId: targetId ?? res.chosenTargetId ?? null,
                 underFingerText,
             });
-            if (actorId) {
-                BattleUnitAnimHooks.playPrepCancel(actorId, actorSlotIndex, chooseTarget !== EChooseTarget.Self);
-                BattleUnitAnimHooks.playIdle(actorId, actorSlotIndex);
+            if (wasDragging && actorId) {
+                BattleUnitAnimHooks.playPrepBack(actorId, actorSlotIndex, towardEnemy);
             }
             this.refreshHandFromBattle();
             return;
@@ -560,19 +602,24 @@ export class BattleMediator extends AreaViewMediator {
             manaCost: res.manaCost,
         });
 
-        // 施法演出动画尚未定名；先收回预备再回待机（Player 接好后再播施法）
-        const towardEnemy = chooseTarget !== EChooseTarget.Self;
-        BattleUnitAnimHooks.playPrepCancel(actorId, actorSlotIndex, towardEnemy);
-        BattleUnitAnimHooks.playIdle(actorId, actorSlotIndex);
+        if (wasDragging) {
+            BattleUnitAnimHooks.playUsingMagic(actorId, actorSlotIndex);
+        }
         // 手牌刷新由 EVT_BATTLE_HAND_CHANGED 触发
     }
 
     private returnCardToHand(drag: IHandDragState): void {
         const actorId = BattleFacade.getInstance().currentActorUnitId;
-        const slot = actorId != null ? this._unitBinder.getSlotByUnitId(actorId) : null;
-        if (actorId != null && slot != null) {
-            BattleUnitAnimHooks.playPrepCancel(actorId, slot.slotIndex, drag.chooseTarget !== EChooseTarget.Self);
-            BattleUnitAnimHooks.playIdle(actorId, slot.slotIndex);
+        if (actorId != null && drag.dragging) {
+            const unit = BattleFacade.getInstance().fieldModel?.getUnit(actorId);
+            const slotIndex = unit?.slotIndex
+                ?? this._unitBinder.getSlotByUnitId(actorId)?.slotIndex
+                ?? 0;
+            BattleUnitAnimHooks.playPrepBack(
+                actorId,
+                slotIndex,
+                drag.chooseTarget !== EChooseTarget.Self,
+            );
         }
         this.cancelDragVisual(false);
         this.refreshHandFromBattle();

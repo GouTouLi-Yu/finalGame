@@ -7,14 +7,16 @@ import {
     UITransform,
     Vec3,
 } from 'cc';
+import { AnimQualityLevel } from '../../../anim/AnimQualityLevel';
+import { AnimQualityService } from '../../../anim/AnimQualityService';
 import { EBattleSide } from '../model/battle/BattleEnums';
+import { getAimFxBudget, type IAimFxBudget } from './BattleAimFxQuality';
 
 const { ccclass } = _decorator;
 
-interface IRaisedHost {
-    host: Node;
-    parent: Node;
-}
+/** 非亮起单位压暗（单位在暗幕之上，可略压暗以拉开对比） */
+const UNIT_DIM_OPACITY = 110;
+const UNIT_HOST_NAME = /^(character|enemy)\d+$/;
 
 interface IFairyMote {
     u: number; // 0顶→1底
@@ -29,9 +31,10 @@ interface IFairyMote {
 
 /**
  * 舞台追光：
- * - 拖牌需选目标：全屏压暗；合法目标常亮
- * - 队友青蓝准星 / 施法者暖金法阵
- * - 锁定己方：暖色细丝带 + 小翅膀；锁定敌人：电光折线闪电
+ * - 暗幕 + 光带/雾/光池：anim 之下（不压住角色）
+ * - 准星标记/星尘：anim 之上
+ * - 非目标降透明；绝不 setParent 抬单位
+ * - 随 AnimQuality 高/中/低三档调节密度与三角形量
  */
 @ccclass('BattleTargetSpotlight')
 export class BattleTargetSpotlight extends Component {
@@ -41,6 +44,8 @@ export class BattleTargetSpotlight extends Component {
     private _gBeam!: Graphics;
     private _gPool!: Graphics;
     private _gSpark!: Graphics;
+    /** anim 之下：暗幕 + 光带/雾/光池 */
+    private _underRoot: Node | null = null;
 
     private _active = false;
     private _t = 0;
@@ -49,11 +54,13 @@ export class BattleTargetSpotlight extends Component {
     private _focusTouch: Node | null = null;
     private _focusSide: EBattleSide | null = null;
     private _casterTouch: Node | null = null;
+    private _quality: AnimQualityLevel = AnimQualityLevel.High;
+    private _budget: IAimFxBudget = getAimFxBudget(AnimQualityLevel.High);
     private readonly _eligibleTouches: Node[] = [];
-    private readonly _raised: IRaisedHost[] = [];
+    private readonly _dimmedHosts: Node[] = [];
     private readonly _motes: IFairyMote[] = [];
-    /** 各原父节点在首次抬起前的完整子节点顺序，用于精确还原层级 */
-    private readonly _originOrderByParent = new Map<Node, Node[]>();
+    /** 上次亮起名单签名，避免每帧重复 setOpacity */
+    private _brightSig = '';
 
     private readonly _tmp = new Color();
     private readonly _cA = new Color();
@@ -78,13 +85,16 @@ export class BattleTargetSpotlight extends Component {
         viewRoot.addChild(n);
         const fx = n.addComponent(BattleTargetSpotlight);
         fx.buildLayers();
-        fx.pinBelowHandUi();
+        fx.pinLayers();
         n.active = false;
         return fx;
     }
 
-    /** 暗幕盖住 anim/背景，但不盖手牌 card / Layer */
-    private pinBelowHandUi(): void {
+    /**
+     * 下层（暗幕/光带）：anim 之前；上层（标记）：anim 之后、手牌之前。
+     * 仅在层级不对时改 sibling，避免拖牌每帧闪烁。
+     */
+    private pinLayers(): void {
         const viewRoot = this.node.parent;
         if (viewRoot == null) {
             return;
@@ -92,18 +102,66 @@ export class BattleTargetSpotlight extends Component {
         const anim = viewRoot.getChildByName('anim');
         const card = viewRoot.getChildByName('card');
         const layer = viewRoot.getChildByName('Layer');
+        const underRoot = this.ensureUnderRoot();
+
         if (anim != null) {
-            this.node.setSiblingIndex(anim.getSiblingIndex() + 1);
+            if (underRoot.getSiblingIndex() !== anim.getSiblingIndex() - 1) {
+                underRoot.setSiblingIndex(anim.getSiblingIndex());
+            }
+            if (this.node.getSiblingIndex() !== anim.getSiblingIndex() + 1) {
+                this.node.setSiblingIndex(anim.getSiblingIndex() + 1);
+            }
             return;
         }
         const cardIdx = card?.getSiblingIndex();
         const layerIdx = layer?.getSiblingIndex();
-        if (cardIdx != null && layerIdx != null) {
-            this.node.setSiblingIndex(Math.min(cardIdx, layerIdx));
-        } else if (cardIdx != null) {
-            this.node.setSiblingIndex(cardIdx);
-        } else if (layerIdx != null) {
-            this.node.setSiblingIndex(layerIdx);
+        const handIdx = cardIdx != null && layerIdx != null
+            ? Math.min(cardIdx, layerIdx)
+            : (cardIdx ?? layerIdx);
+        if (handIdx != null) {
+            const wantUnder = Math.max(0, handIdx - 1);
+            if (underRoot.getSiblingIndex() !== wantUnder) {
+                underRoot.setSiblingIndex(wantUnder);
+            }
+            if (this.node.getSiblingIndex() !== handIdx) {
+                this.node.setSiblingIndex(handIdx);
+            }
+        }
+    }
+
+    private ensureUnderRoot(): Node {
+        const viewRoot = this.node.parent!;
+        // 兼容旧名 StageVeil
+        let underRoot = viewRoot.getChildByName('StageAimUnder')
+            ?? viewRoot.getChildByName('StageVeil');
+        if (underRoot == null || !underRoot.isValid) {
+            underRoot = new Node('StageAimUnder');
+            underRoot.layer = viewRoot.layer;
+            const vut = viewRoot.getComponent(UITransform);
+            const ut = underRoot.addComponent(UITransform);
+            ut.setContentSize(vut?.width ?? 2560, vut?.height ?? 1440);
+            ut.setAnchorPoint(vut?.anchorX ?? 0.5, vut?.anchorY ?? 0.5);
+            underRoot.setPosition(0, 0, 0);
+            viewRoot.addChild(underRoot);
+        } else if (underRoot.name === 'StageVeil') {
+            underRoot.name = 'StageAimUnder';
+        }
+        this._underRoot = underRoot;
+        this.reparentUnder(this._gVeil?.node);
+        this.reparentUnder(this._gFog?.node);
+        this.reparentUnder(this._gBeam?.node);
+        this.reparentUnder(this._gPool?.node);
+        return underRoot;
+    }
+
+    private reparentUnder(node: Node | null | undefined): void {
+        const underRoot = this._underRoot;
+        if (node == null || underRoot == null || !node.isValid) {
+            return;
+        }
+        if (node.parent !== underRoot) {
+            node.setParent(underRoot);
+            node.setPosition(0, 0, 0);
         }
     }
 
@@ -114,14 +172,26 @@ export class BattleTargetSpotlight extends Component {
         this._gBeam = this.makeGfx('beam');
         this._gPool = this.makeGfx('pool');
         this._gSpark = this.makeGfx('spark');
-        this.seedMotes();
+        this.ensureUnderRoot();
+        this.ensureLayerOrder();
+        this.syncQuality(true);
     }
 
-    private seedMotes(): void {
+    private syncQuality(force = false): void {
+        const level = AnimQualityService.getCurrent();
+        if (!force && level === this._quality) {
+            return;
+        }
+        this._quality = level;
+        this._budget = getAimFxBudget(level);
+        this.seedMotes(this._budget.motes);
+    }
+
+    private seedMotes(count: number): void {
         this._motes.length = 0;
-        for (let i = 0; i < 36; i++) {
+        for (let i = 0; i < count; i++) {
             this._motes.push({
-                u: (i * 0.11 + 0.03) % 1,
+                u: (i * 0.097 + 0.03) % 1,
                 side: (i % 2 === 0 ? 1 : -1) * (0.15 + (i % 5) * 0.08),
                 speed: 0.08 + (i % 7) * 0.025,
                 size: 1.1 + (i % 5) * 0.45,
@@ -142,7 +212,7 @@ export class BattleTargetSpotlight extends Component {
     }
 
     /**
-     * @param raiseHosts 未锁定时抬上暗幕的单位（合法目标 + 施法者）
+     * @param raiseHosts 未锁定时常亮的单位（合法目标 + 施法者）
      * @param eligibleTouches 合法目标 touchLayer：未锁定时画可选标记
      * @param casterTouch 施法者 touchLayer：未锁定时画施法标记
      * @param focusTouchLayer 当前指中的目标；有则只亮他并打追光，其余压暗
@@ -161,9 +231,12 @@ export class BattleTargetSpotlight extends Component {
             this._t = 0;
             this._veilDrop = 0;
             this._beamDrop = 0;
-            this._originOrderByParent.clear();
+            this.pinLayers();
+            if (this._underRoot != null) {
+                this._underRoot.active = true;
+            }
+            this.syncQuality(true);
         }
-        this.pinBelowHandUi();
         this.syncSize();
 
         this._eligibleTouches.length = 0;
@@ -187,32 +260,30 @@ export class BattleTargetSpotlight extends Component {
         }
 
         // 未选中：合法目标+施法者常亮；已选中：亮当前目标+施法者（施法者始终不暗），其余压暗
-        const raiseNow: Node[] = [];
-        const pushRaise = (host: Node | null | undefined): void => {
+        const brightNow: Node[] = [];
+        const pushBright = (host: Node | null | undefined): void => {
             if (host == null || !host.isValid) {
                 return;
             }
-            if (raiseNow.indexOf(host) < 0) {
-                raiseNow.push(host);
+            if (brightNow.indexOf(host) < 0) {
+                brightNow.push(host);
             }
         };
         if (this._focusTouch != null && this._focusTouch.isValid) {
-            pushRaise(this._focusTouch.parent);
+            pushBright(this._focusTouch.parent);
         } else {
             for (const host of raiseHosts) {
-                pushRaise(host);
+                pushBright(host);
             }
         }
-        // 施法者始终抬在暗幕上
         if (this._casterTouch != null && this._casterTouch.isValid) {
-            pushRaise(this._casterTouch.parent);
+            pushBright(this._casterTouch.parent);
         }
-        this.syncRaisedHosts(raiseNow);
+        this.syncHostDim(brightNow);
     }
 
     hide(): void {
-        this.restoreAllRaised();
-        this._originOrderByParent.clear();
+        this.clearHostDim();
         this._active = false;
         this._focusTouch = null;
         this._focusSide = null;
@@ -221,6 +292,9 @@ export class BattleTargetSpotlight extends Component {
         this._veilDrop = 0;
         this._beamDrop = 0;
         this.node.active = false;
+        if (this._underRoot != null && this._underRoot.isValid) {
+            this._underRoot.active = false;
+        }
         this._gVeil?.clear();
         this._gFog?.clear();
         this._gMark?.clear();
@@ -234,6 +308,7 @@ export class BattleTargetSpotlight extends Component {
             return;
         }
         this._t += dt;
+        this.syncQuality();
         this._veilDrop = Math.min(1, this._veilDrop + dt * 4.5);
         if (this._focusTouch != null && this._focusTouch.isValid) {
             this._beamDrop = Math.min(1, this._beamDrop + dt * 3.2);
@@ -254,7 +329,6 @@ export class BattleTargetSpotlight extends Component {
 
         this.drawVeil(left, bottom, w, h);
         this.drawRoleMarks(ut);
-        this.ensureLayerOrder();
 
         if (this._focusTouch == null || !this._focusTouch.isValid) {
             this._gFog.clear();
@@ -379,7 +453,7 @@ export class BattleTargetSpotlight extends Component {
         g.fill();
     }
 
-    /** 施法者：暖金法阵 + 皇冠，偏「我在出牌」 */
+    /** 施法者：脚下暖金法阵，偏「我在出牌」 */
     private drawCasterMark(
         g: Graphics,
         stageUt: UITransform,
@@ -393,7 +467,6 @@ export class BattleTargetSpotlight extends Component {
         const th = touchUt?.height ?? 200;
         const cx = base.x;
         const footY = base.y;
-        const headY = footY + th * 0.98;
         const rx = base.poolRx * 1.05;
 
         // 脚下暖色光池（比队友更实）
@@ -444,51 +517,6 @@ export class BattleTargetSpotlight extends Component {
         g.lineTo(cx - 2, footY + beamH);
         g.close();
         g.fill();
-
-        // 头顶皇冠：中菱 + 两侧翼 + 闪星
-        const crownY = headY + 8 + Math.sin(this._t * 4) * 3;
-        this._tmp.set(255, 200, 70, Math.floor(90 * aMul));
-        g.fillColor = this._tmp;
-        g.circle(cx, crownY, 16 * pulse);
-        g.fill();
-
-        this._tmp.set(255, 230, 120, Math.floor(230 * aMul));
-        g.fillColor = this._tmp;
-        // 中峰
-        g.moveTo(cx, crownY + 16);
-        g.lineTo(cx - 7, crownY + 2);
-        g.lineTo(cx + 7, crownY + 2);
-        g.close();
-        g.fill();
-        // 左峰
-        g.moveTo(cx - 12, crownY + 12);
-        g.lineTo(cx - 18, crownY);
-        g.lineTo(cx - 6, crownY + 2);
-        g.close();
-        g.fill();
-        // 右峰
-        g.moveTo(cx + 12, crownY + 12);
-        g.lineTo(cx + 18, crownY);
-        g.lineTo(cx + 6, crownY + 2);
-        g.close();
-        g.fill();
-        // 冠托
-        this._tmp.set(255, 210, 90, Math.floor(220 * aMul));
-        g.fillColor = this._tmp;
-        g.rect(cx - 16, crownY - 2, 32, 5);
-        g.fill();
-
-        // 环绕碎星
-        for (let i = 0; i < 5; i++) {
-            const ang = spin + (i / 5) * Math.PI * 2;
-            const rr = 20 + pulse * 4;
-            const x = cx + Math.cos(ang) * rr;
-            const y = crownY + 6 + Math.sin(ang) * rr * 0.45;
-            const tw = 0.5 + 0.5 * Math.abs(Math.sin(this._t * 6 + i));
-            this._tmp.set(255, 245, 180, Math.floor(200 * tw * aMul));
-            g.fillColor = this._tmp;
-            this.drawTinyStar(g, x, y, 2.2 + tw, ang);
-        }
     }
 
     private strokePolygon(
@@ -529,113 +557,76 @@ export class BattleTargetSpotlight extends Component {
         g.fill();
     }
 
-    private syncRaisedHosts(eligibleHosts: Node[]): void {
-        const wanted = new Set(eligibleHosts.filter((n) => n != null && n.isValid));
-        let needReorder = false;
-
-        // 先还原不再需要抬起的
-        for (let i = this._raised.length - 1; i >= 0; i--) {
-            const item = this._raised[i];
-            if (!wanted.has(item.host)) {
-                this.detachToOriginParent(item);
-                this._raised.splice(i, 1);
-                needReorder = true;
-            }
-        }
-        if (needReorder) {
-            this.reapplyOriginOrders();
-        }
-
-        const raisedSet = new Set(this._raised.map((r) => r.host));
-        for (const host of wanted) {
-            if (raisedSet.has(host)) {
-                host.setOpacity?.(255);
-                continue;
-            }
-            // 已在 StageSpotlight 下则跳过（异常态）
-            if (host.parent === this.node) {
-                host.setOpacity?.(255);
-                continue;
-            }
-            if (host.parent == null) {
-                continue;
-            }
-            this.captureOriginOrder(host.parent);
-            const parent = host.parent;
-            host.setParent(this.node, true);
-            host.setSiblingIndex(this._gSpark.node.getSiblingIndex());
-            host.setOpacity?.(255);
-            this._raised.push({ host, parent });
-        }
-    }
-
-    /** 首次从某父节点抬起前，记下当时完整子节点顺序 */
-    private captureOriginOrder(parent: Node): void {
-        if (this._originOrderByParent.has(parent)) {
+    /** 亮起名单内常亮，其余 character/enemy 挂点降透明（不挪父节点） */
+    private syncHostDim(brightHosts: Node[]): void {
+        const bright = new Set(brightHosts.filter((n) => n != null && n.isValid));
+        const sig = [...bright].map((n) => n.uuid).sort().join('|');
+        if (sig === this._brightSig) {
             return;
         }
-        this._originOrderByParent.set(parent, parent.children.slice());
-    }
+        this._brightSig = sig;
 
-    private detachToOriginParent(item: IRaisedHost): void {
-        if (!item.host.isValid) {
+        const anim = this.node.parent?.getChildByName('anim');
+        if (anim == null || !anim.isValid) {
+            this.clearHostDim();
             return;
         }
-        const parent = item.parent.isValid ? item.parent : null;
-        if (parent == null) {
-            return;
-        }
-        item.host.setParent(parent, true);
-    }
 
-    private restoreAllRaised(): void {
-        for (let i = this._raised.length - 1; i >= 0; i--) {
-            this.detachToOriginParent(this._raised[i]);
-        }
-        this._raised.length = 0;
-        this.reapplyOriginOrders();
-    }
-
-    /** 按首次快照把各父节点下的子节点顺序排回原样 */
-    private reapplyOriginOrders(): void {
-        for (const [parent, order] of this._originOrderByParent) {
-            if (!parent.isValid) {
+        const nextDimmed: Node[] = [];
+        for (const child of anim.children) {
+            if (child == null || !child.isValid || !UNIT_HOST_NAME.test(child.name)) {
                 continue;
             }
-            for (let i = 0; i < order.length; i++) {
-                const node = order[i];
-                if (node != null && node.isValid && node.parent === parent) {
-                    node.setSiblingIndex(i);
-                }
+            if (bright.has(child)) {
+                child.setOpacity(255);
+            } else {
+                child.setOpacity(UNIT_DIM_OPACITY);
+                nextDimmed.push(child);
+            }
+        }
+
+        for (const host of this._dimmedHosts) {
+            if (!host.isValid) {
+                continue;
+            }
+            if (nextDimmed.indexOf(host) < 0 && !bright.has(host)) {
+                host.setOpacity(255);
+            }
+        }
+        this._dimmedHosts.length = 0;
+        for (const host of nextDimmed) {
+            this._dimmedHosts.push(host);
+        }
+    }
+
+    private clearHostDim(): void {
+        this._brightSig = '';
+        for (const host of this._dimmedHosts) {
+            if (host.isValid) {
+                host.setOpacity(255);
+            }
+        }
+        this._dimmedHosts.length = 0;
+
+        const anim = this.node.parent?.getChildByName('anim');
+        if (anim == null || !anim.isValid) {
+            return;
+        }
+        for (const child of anim.children) {
+            if (child != null && child.isValid && UNIT_HOST_NAME.test(child.name)) {
+                child.setOpacity(255);
             }
         }
     }
 
     private ensureLayerOrder(): void {
-        // 暗幕 → 梦雾/光柱/光池 → 单位 → 标记 → 星尘（最上）
+        // 下层：暗幕 → 雾 → 光带 → 光池；上层：标记 → 星尘
         this._gVeil.node.setSiblingIndex(0);
         this._gFog.node.setSiblingIndex(1);
         this._gBeam.node.setSiblingIndex(2);
         this._gPool.node.setSiblingIndex(3);
-        let idx = 4;
-        let focusHost: Node | null = null;
-        if (this._focusTouch != null && this._focusTouch.isValid) {
-            focusHost = this._focusTouch.parent;
-        }
-        for (const item of this._raised) {
-            if (!item.host.isValid || item.host.parent !== this.node) {
-                continue;
-            }
-            if (item.host === focusHost) {
-                continue;
-            }
-            item.host.setSiblingIndex(idx++);
-        }
-        if (focusHost != null && focusHost.parent === this.node) {
-            focusHost.setSiblingIndex(idx++);
-        }
-        this._gMark.node.setSiblingIndex(idx++);
-        this._gSpark.node.setSiblingIndex(idx);
+        this._gMark.node.setSiblingIndex(0);
+        this._gSpark.node.setSiblingIndex(1);
     }
 
     private getTouchLayerBaseLocal(stageUt: UITransform, touchLayer: Node): {
@@ -672,13 +663,18 @@ export class BattleTargetSpotlight extends Component {
         }
         ut.setContentSize(put.width, put.height);
         ut.setAnchorPoint(put.anchorX, put.anchorY);
+        const underUt = this._underRoot?.getComponent(UITransform);
+        if (underUt != null) {
+            underUt.setContentSize(put.width, put.height);
+            underUt.setAnchorPoint(put.anchorX, put.anchorY);
+        }
     }
 
     private drawVeil(left: number, bottom: number, w: number, h: number): void {
         const g = this._gVeil;
         g.clear();
-        // 保留拖拽时好看的暗幕浓度
-        this._tmp.set(10, 8, 28, Math.floor(175 * this._veilDrop));
+        // 轻暗幕（单位不再抬到幕上，过浓会把目标一并压黑；亮暗靠单位透明度区分）
+        this._tmp.set(10, 8, 28, Math.floor(100 * this._veilDrop));
         g.fillColor = this._tmp;
         g.rect(left, bottom, w, h);
         g.fill();
@@ -723,13 +719,13 @@ export class BattleTargetSpotlight extends Component {
         aMul: number,
         breathe: number,
     ): void {
-        const segs = 36;
-        const passes: Array<{ w: number; a: number }> = [
-            { w: 24 * breathe, a: 75 * aMul },
-            { w: 14 * breathe, a: 120 * aMul },
-            { w: 7 * breathe, a: 170 * aMul },
-        ];
-        for (const pass of passes) {
+        const segs = this._budget.beamSegs;
+        const passN = this._budget.ribbonPasses;
+        const widths = [28, 18, 10, 6].map((w) => w * breathe);
+        const alphas = [80, 125, 175, 210].map((a) => a * aMul);
+        for (let pass = 0; pass < passN; pass++) {
+            const passW = widths[pass] ?? 5;
+            const passA = alphas[pass] ?? 100;
             for (let i = 0; i < segs; i++) {
                 const t0 = i / segs;
                 const t1 = (i + 1) / segs;
@@ -738,9 +734,9 @@ export class BattleTargetSpotlight extends Component {
                 const x0 = tx + Math.sin(this._t * 1.2 + t0 * 2.2) * 1.6;
                 const x1 = tx + Math.sin(this._t * 1.2 + t1 * 2.2) * 1.6;
                 const wave = 0.85 + 0.15 * Math.sin(t0 * 8 + this._t * 2);
-                this.fairyColor(t0, 0.45, this._tmp, pass.a * (0.8 + 0.2 * t0));
+                this.fairyColor(t0, 0.45, this._tmp, passA * (0.8 + 0.2 * t0));
                 g.strokeColor = this._tmp;
-                g.lineWidth = pass.w * wave;
+                g.lineWidth = passW * wave;
                 g.moveTo(x0, y0);
                 g.lineTo(x1, y1);
                 g.stroke();
@@ -775,6 +771,9 @@ export class BattleTargetSpotlight extends Component {
 
     /** 己方光带上的小翅膀（左右一对，轻扇动） */
     private drawFairyWings(g: Graphics, cx: number, cy: number, aMul: number, breathe: number): void {
+        if (!this._budget.drawWings) {
+            return;
+        }
         const flap = Math.sin(this._t * 5.2) * 0.14;
         const scale = (0.96 + 0.04 * Math.sin(this._t * 2.8)) * breathe;
         this.drawOneWing(g, cx, cy, -1, flap, scale, aMul);
@@ -796,16 +795,26 @@ export class BattleTargetSpotlight extends Component {
         aMul: number,
     ): void {
         const lift = flap * 16;
-        // 上层大羽
-        this.fairyColor(0.12, 0.35, this._tmp, Math.floor(160 * aMul));
-        this.fillWingPetal(g, cx, cy + lift * 0.3, 58 * scale, 28 * scale, side, 0.18);
-        // 中层
-        this.fairyColor(0.42, 0.55, this._tmp, Math.floor(180 * aMul));
-        this.fillWingPetal(g, cx, cy - 2 + lift * 0.15, 46 * scale, 21 * scale, side, -0.04);
-        // 下层小羽
-        this.fairyColor(0.72, 0.75, this._tmp, Math.floor(200 * aMul));
-        this.fillWingPetal(g, cx, cy - 10 + lift * 0.1, 32 * scale, 15 * scale, side, -0.24);
-        // 羽尖高光
+        const feathers = Math.max(1, this._budget.wingFeathers);
+        const specs = [
+            { t: 0.12, len: 58, thick: 28, y: 0, tilt: 0.18 },
+            { t: 0.42, len: 46, thick: 21, y: -2, tilt: -0.04 },
+            { t: 0.72, len: 32, thick: 15, y: -10, tilt: -0.24 },
+            { t: 0.9, len: 22, thick: 10, y: -16, tilt: -0.35 },
+        ];
+        for (let i = 0; i < feathers && i < specs.length; i++) {
+            const s = specs[i];
+            this.fairyColor(s.t, 0.35 + i * 0.12, this._tmp, Math.floor((160 + i * 12) * aMul));
+            this.fillWingPetal(
+                g,
+                cx,
+                cy + s.y + lift * (0.3 - i * 0.05),
+                s.len * scale,
+                s.thick * scale,
+                side,
+                s.tilt,
+            );
+        }
         this._tmp.set(255, 255, 255, Math.floor(175 * aMul));
         this.fillSoftBlobColor(
             g,
@@ -866,7 +875,7 @@ export class BattleTargetSpotlight extends Component {
         breathe: number,
     ): void {
         const pts: Array<{ x: number; y: number }> = [];
-        const zigN = 11;
+        const zigN = this._budget.zigN;
         // 折线形态刷新放慢（约 0.45s 换一次），别闪太快
         const seed = Math.floor(this._t * 2.2);
         for (let i = 0; i <= zigN; i++) {
@@ -882,8 +891,8 @@ export class BattleTargetSpotlight extends Component {
             pts.push({ x, y });
         }
 
-        // 外层电晕
-        for (let pass = 0; pass < 3; pass++) {
+        const passN = Math.min(3, this._budget.ribbonPasses);
+        for (let pass = 0; pass < passN; pass++) {
             const w = [16, 9, 4.5][pass] * breathe;
             const a = [70, 120, 190][pass] * aMul;
             for (let i = 0; i < pts.length - 1; i++) {
@@ -896,7 +905,6 @@ export class BattleTargetSpotlight extends Component {
                 g.stroke();
             }
         }
-        // 白芯
         for (let i = 0; i < pts.length - 1; i++) {
             this._tmp.set(240, 250, 255, Math.floor(230 * aMul));
             g.strokeColor = this._tmp;
@@ -906,26 +914,28 @@ export class BattleTargetSpotlight extends Component {
             g.stroke();
         }
 
-        // 侧枝闪电
-        for (let i = 2; i < pts.length - 2; i += 2) {
-            const p = pts[i];
-            const side = i % 4 === 0 ? 1 : -1;
-            const len = (14 + (i % 3) * 5) * breathe;
-            const ang = side * (0.9 + ((i + seed) % 5) * 0.08);
-            const ex = p.x + Math.cos(ang) * len;
-            const ey = p.y + Math.sin(ang) * len * 0.55;
-            this.boltColor(i / pts.length, this._tmp, 150 * aMul);
-            g.strokeColor = this._tmp;
-            g.lineWidth = 3.2 * breathe;
-            g.moveTo(p.x, p.y);
-            g.lineTo(ex, ey);
-            g.stroke();
-            this._tmp.set(255, 255, 255, Math.floor(200 * aMul));
-            g.strokeColor = this._tmp;
-            g.lineWidth = 1.4;
-            g.moveTo(p.x, p.y);
-            g.lineTo(ex, ey);
-            g.stroke();
+        const forkStep = this._budget.forkStep;
+        if (forkStep > 0) {
+            for (let i = 2; i < pts.length - 2; i += forkStep) {
+                const p = pts[i];
+                const side = i % 4 === 0 ? 1 : -1;
+                const len = (14 + (i % 3) * 5) * breathe;
+                const ang = side * (0.9 + ((i + seed) % 5) * 0.08);
+                const ex = p.x + Math.cos(ang) * len;
+                const ey = p.y + Math.sin(ang) * len * 0.55;
+                this.boltColor(i / pts.length, this._tmp, 150 * aMul);
+                g.strokeColor = this._tmp;
+                g.lineWidth = 3.2 * breathe;
+                g.moveTo(p.x, p.y);
+                g.lineTo(ex, ey);
+                g.stroke();
+                this._tmp.set(255, 255, 255, Math.floor(200 * aMul));
+                g.strokeColor = this._tmp;
+                g.lineWidth = 1.4;
+                g.moveTo(p.x, p.y);
+                g.lineTo(ex, ey);
+                g.stroke();
+            }
         }
 
         // 天口电火花
@@ -942,19 +952,20 @@ export class BattleTargetSpotlight extends Component {
     private drawDreamFog(tx: number, ty: number, screenTop: number, breathe: number): void {
         const g = this._gFog;
         g.clear();
-        if (this._beamDrop < 0.1) {
+        if (this._beamDrop < 0.1 || !this._budget.drawFog) {
             return;
         }
         const skyY = screenTop + 20;
         const h = (skyY - ty) * this._beamDrop;
-        for (let i = 0; i < 14; i++) {
-            const u = (i / 14 + this._t * 0.03) % 1;
+        const fogN = this._budget.fogCount;
+        for (let i = 0; i < fogN; i++) {
+            const u = (i / fogN + this._t * 0.03) % 1;
             const y = skyY - u * h;
             const sway = Math.sin(this._t * 1.1 + i * 1.7) * (8 + u * 10);
             const x = tx + sway * (i % 2 === 0 ? 1 : -1);
             const rx = (10 + (i % 4) * 3) * breathe;
             const ry = rx * (0.45 + (i % 3) * 0.1);
-            this.fairyColor(u, i / 14, this._tmp, Math.floor(55 * this._beamDrop));
+            this.fairyColor(u, i / fogN, this._tmp, Math.floor(55 * this._beamDrop));
             this.fillSoftBlobColor(g, x, y, rx, ry, this._t * 0.4 + i, this._tmp);
         }
     }
@@ -984,7 +995,10 @@ export class BattleTargetSpotlight extends Component {
         this._tmp.set(255, 255, 255, Math.floor(180 * appear));
         this.fillSoftBlobColor(g, tx, ty, rx0 * 0.35, rx0 * 0.12, 0, this._tmp);
 
-        const n = 12;
+        if (!this._budget.drawPoolDecor) {
+            return;
+        }
+        const n = this._budget.poolStars;
         for (let i = 0; i < n; i++) {
             const ang = this._t * 1.4 + (i / n) * Math.PI * 2;
             const jag = 0.9 + 0.1 * Math.sin(ang * 3 + this._t);
@@ -1004,7 +1018,7 @@ export class BattleTargetSpotlight extends Component {
     private drawFairyMotes(tx: number, ty: number, screenTop: number, dt: number): void {
         const g = this._gSpark;
         g.clear();
-        if (this._beamDrop < 0.1) {
+        if (this._beamDrop < 0.1 || !this._budget.drawDust) {
             return;
         }
         const skyY = screenTop + 28;
@@ -1046,7 +1060,11 @@ export class BattleTargetSpotlight extends Component {
             }
         }
 
-        for (let i = 0; i < 8; i++) {
+        if (!this._budget.drawSparks) {
+            return;
+        }
+        const burstN = Math.min(16, this._budget.sparkBurst);
+        for (let i = 0; i < burstN; i++) {
             const burst = 0.5 + 0.5 * Math.sin(this._t * 3.2 + i * 2.1);
             if (burst < 0.62) {
                 continue;
@@ -1133,7 +1151,7 @@ export class BattleTargetSpotlight extends Component {
         color: Color,
     ): void {
         g.fillColor = color;
-        const steps = 14;
+        const steps = this._budget.blobSteps;
         for (let i = 0; i <= steps; i++) {
             const a = rot + (i / steps) * Math.PI * 2;
             // 多层起伏，边缘更像云团/花瓣，不像椭圆

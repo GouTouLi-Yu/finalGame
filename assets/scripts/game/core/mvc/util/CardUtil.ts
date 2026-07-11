@@ -2,6 +2,8 @@ import { ConfigReader } from 'db://assets/scripts/frame/Data/ConfigReader';
 import { pairs } from 'db://assets/scripts/frame/luaCompat/pairs';
 import Strings from '../../../utils/Strings';
 import { Card } from '../model/card/Card';
+import { EElementType } from '../model/element/ElementType';
+import { ElementUtil } from './ElementUtil';
 
 const TABLE = 'CardConfig';
 
@@ -64,6 +66,25 @@ export class CardUtil {
 
     static getActionId(id: string): string {
         return this.getCfg(id)?.actionId ?? '';
+    }
+
+    /** 卡牌元素（elem1/elem2），去空、去重保序，最多 2 个 */
+    static getElements(id: string): EElementType[] {
+        const cfg = this.getCfg(id);
+        if (cfg == null) {
+            return [];
+        }
+        const out: EElementType[] = [];
+        const seen = new Set<EElementType>();
+        for (const raw of [cfg.elem1, cfg.elem2]) {
+            const e = ElementUtil.parseElement(raw);
+            if (e == null || seen.has(e)) {
+                continue;
+            }
+            seen.add(e);
+            out.push(e);
+        }
+        return out;
     }
 
     static isValidCardId(id: string): boolean {

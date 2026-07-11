@@ -8,6 +8,9 @@ import {
     Vec2,
     Vec3,
 } from 'cc';
+import { AnimQualityLevel } from '../../../anim/AnimQualityLevel';
+import { AnimQualityService } from '../../../anim/AnimQualityService';
+import { getAimFxBudget, type IAimFxBudget } from './BattleAimFxQuality';
 
 const { ccclass } = _decorator;
 
@@ -25,8 +28,10 @@ interface IDust {
     kind: number; // 0星芒 1碎晶 2花粉 3小星 4飘带点
 }
 
+const MAX_SAMPLE_SEGS = 72;
+
 /**
- * 梦幻魔法弧光：不规则星尘/碎晶/花粉，丰富渐变，无规则圆球流光。
+ * 梦幻魔法弧光：不规则星尘/碎晶/花粉，丰富渐变；随 AnimQuality 高/中/低三档。
  */
 @ccclass('BattleTargetArcFx')
 export class BattleTargetArcFx extends Component {
@@ -43,6 +48,9 @@ export class BattleTargetArcFx extends Component {
     private _active = false;
     private _phase = 0;
     private _pulse = 0;
+    private _quality: AnimQualityLevel = AnimQualityLevel.High;
+    private _budget: IAimFxBudget = getAimFxBudget(AnimQualityLevel.High);
+    private _sampleCount = MAX_SAMPLE_SEGS + 1;
     private readonly _samples: Vec3[] = [];
     private readonly _tangents: Vec3[] = [];
     private readonly _dust: IDust[] = [];
@@ -52,6 +60,12 @@ export class BattleTargetArcFx extends Component {
     private readonly _cOut = new Color();
 
     static create(parent: Node): BattleTargetArcFx {
+        const existing = parent.getChildByName('TargetArcFx');
+        const existingFx = existing?.getComponent(BattleTargetArcFx);
+        if (existingFx != null) {
+            return existingFx;
+        }
+
         const node = new Node('TargetArcFx');
         const ut = node.addComponent(UITransform);
         const parentUt = parent.getComponent(UITransform);
@@ -74,7 +88,7 @@ export class BattleTargetArcFx extends Component {
 
         const fx = node.addComponent(BattleTargetArcFx);
         fx.buildLayers();
-        fx.seedDust();
+        fx.syncQuality(true);
         node.active = false;
         return fx;
     }
@@ -85,7 +99,7 @@ export class BattleTargetArcFx extends Component {
         this._gDust = this.makeGfx('dust');
         this._gSpark = this.makeGfx('spark');
         this._gTip = this.makeGfx('tip');
-        for (let i = 0; i <= 48; i++) {
+        for (let i = 0; i <= MAX_SAMPLE_SEGS; i++) {
             this._samples.push(new Vec3());
             this._tangents.push(new Vec3());
         }
@@ -99,24 +113,25 @@ export class BattleTargetArcFx extends Component {
         return n.addComponent(Graphics);
     }
 
-    private seedDust(): void {
+    private syncQuality(force = false): void {
+        const level = AnimQualityService.getCurrent();
+        if (!force && level === this._quality) {
+            return;
+        }
+        this._quality = level;
+        this._budget = getAimFxBudget(level);
+        this._sampleCount = this._budget.sampleSegs + 1;
+        this.seedDust(this._budget.dust);
+    }
+
+    private seedDust(count: number): void {
         this._dust.length = 0;
-        // 伪随机：不规则分布，避免等间距
-        const seeds = [
-            0.04, 0.09, 0.13, 0.19, 0.22, 0.28, 0.33, 0.37, 0.41, 0.48,
-            0.52, 0.57, 0.61, 0.66, 0.71, 0.74, 0.79, 0.83, 0.88, 0.92, 0.96,
-            0.07, 0.16, 0.25, 0.31, 0.44, 0.55, 0.63, 0.77, 0.85, 0.94,
-            0.11, 0.27, 0.39, 0.5, 0.68, 0.81, 0.9, 0.18, 0.35, 0.58, 0.72,
-            0.02, 0.45, 0.6, 0.86, 0.98, 0.24, 0.42, 0.69, 0.15, 0.53,
-            0.76, 0.08, 0.47, 0.64, 0.91, 0.3, 0.56, 0.82,
-        ];
-        for (let i = 0; i < seeds.length; i++) {
-            const s = seeds[i];
+        for (let i = 0; i < count; i++) {
             this._dust.push({
-                t: s,
-                side: (i % 2 === 0 ? 1 : -1) * (0.35 + ((i * 17) % 10) * 0.12),
-                dist: 6 + ((i * 13) % 11) * 5 + ((i * 7) % 5) * 3,
-                size: 1.4 + ((i * 11) % 6) * 0.85,
+                t: ((i * 0.618033) % 1) * 0.96 + 0.02,
+                side: (i % 2 === 0 ? 1 : -1) * (0.3 + ((i * 17) % 10) * 0.11),
+                dist: 5 + ((i * 13) % 11) * 4.5 + ((i * 7) % 5) * 2.5,
+                size: 1.2 + ((i * 11) % 6) * 0.8,
                 rot: ((i * 37) % 360) * Math.PI / 180,
                 spin: ((i % 5) - 2) * 0.9,
                 twinkle: i * 1.17,
@@ -131,6 +146,7 @@ export class BattleTargetArcFx extends Component {
         this.node.active = true;
         this._phase = 0;
         this._pulse = 0;
+        this.syncQuality(true);
     }
 
     hide(): void {
@@ -153,6 +169,7 @@ export class BattleTargetArcFx extends Component {
         if (!this._active) {
             return;
         }
+        this.syncQuality();
         const lock = this._state === 'lock';
         this._phase += dt * (lock ? 2.4 : 1.6);
         this._pulse += dt * 3.8;
@@ -179,7 +196,7 @@ export class BattleTargetArcFx extends Component {
         if (ut == null) {
             return;
         }
-        const n = this._samples.length - 1;
+        const n = this._sampleCount - 1;
         for (let i = 0; i <= n; i++) {
             this.sampleBezier(i / n, this._samples[i]);
             ut.convertToNodeSpaceAR(this._samples[i], this._samples[i]);
@@ -266,9 +283,13 @@ export class BattleTargetArcFx extends Component {
     /** 梦雾：不规则团块，不是整齐圆串 */
     private drawDreamFog(g: Graphics): void {
         g.clear();
+        if (!this._budget.drawFog) {
+            return;
+        }
         const lock = this._state === 'lock';
-        const n = this._samples.length - 1;
-        for (let i = 0; i < this._dust.length; i += 2) {
+        const n = this._sampleCount - 1;
+        const stride = Math.max(1, this._budget.fogStride);
+        for (let i = 0; i < this._dust.length; i += stride) {
             const d = this._dust[i];
             const idx = Math.min(n, Math.floor(d.t * n));
             const p = this._samples[idx];
@@ -292,25 +313,26 @@ export class BattleTargetArcFx extends Component {
     private drawMagicRibbon(g: Graphics): void {
         g.clear();
         const lock = this._state === 'lock';
-        const pts = this._samples;
-        // 外层柔光
-        for (let pass = 0; pass < 3; pass++) {
-            const baseW = lock ? [42, 24, 14][pass] : [36, 20, 12][pass];
-            const baseA = lock ? [95, 130, 175][pass] : [75, 110, 150][pass];
-            for (let i = 0; i < pts.length - 1; i++) {
-                const t = i / (pts.length - 1);
+        const n = this._sampleCount - 1;
+        const passN = this._budget.ribbonPasses;
+        const widthsHigh = lock ? [48, 30, 18, 10] : [40, 26, 16, 9];
+        const alphasHigh = lock ? [90, 120, 160, 200] : [70, 100, 140, 175];
+        for (let pass = 0; pass < passN; pass++) {
+            const baseW = widthsHigh[pass] ?? 8;
+            const baseA = alphasHigh[pass] ?? 100;
+            for (let i = 0; i < n; i++) {
+                const t = i / n;
                 const wave = 0.7 + 0.55 * Math.sin(t * 9 + this._phase) * Math.sin(t * 3.7 + 1.2);
                 this.fairyColor(t, 0.5, this._cOut, baseA * (0.75 + 0.25 * t));
                 g.strokeColor = this._cOut;
                 g.lineWidth = baseW * wave;
-                g.moveTo(pts[i].x, pts[i].y);
-                g.lineTo(pts[i + 1].x, pts[i + 1].y);
+                g.moveTo(this._samples[i].x, this._samples[i].y);
+                g.lineTo(this._samples[i + 1].x, this._samples[i + 1].y);
                 g.stroke();
             }
         }
-        // 亮芯：细、更白更粉
-        for (let i = 0; i < pts.length - 1; i++) {
-            const t = i / (pts.length - 1);
+        for (let i = 0; i < n; i++) {
+            const t = i / n;
             const wave = 0.6 + 0.7 * Math.abs(Math.sin(t * 11 + this._phase * 1.3));
             this.fairyColor(t, 0.7, this._cOut, lock ? 245 : 220);
             this._cOut.r = Math.min(255, this._cOut.r + 55);
@@ -318,8 +340,8 @@ export class BattleTargetArcFx extends Component {
             this._cOut.b = Math.min(255, this._cOut.b + 55);
             g.strokeColor = this._cOut;
             g.lineWidth = (lock ? 4.4 : 3.6) * wave;
-            g.moveTo(pts[i].x, pts[i].y);
-            g.lineTo(pts[i + 1].x, pts[i + 1].y);
+            g.moveTo(this._samples[i].x, this._samples[i].y);
+            g.lineTo(this._samples[i + 1].x, this._samples[i + 1].y);
             g.stroke();
         }
     }
@@ -327,15 +349,17 @@ export class BattleTargetArcFx extends Component {
     /** 不规则星尘：星芒/碎晶/花粉/小星，闪烁而非流动圆 */
     private drawIrregularDust(g: Graphics): void {
         g.clear();
+        if (!this._budget.drawDust) {
+            return;
+        }
         const lock = this._state === 'lock';
-        const n = this._samples.length - 1;
+        const n = this._sampleCount - 1;
         for (const d of this._dust) {
             const idx = Math.min(n, Math.floor(d.t * n));
             const p = this._samples[idx];
             const tan = this._tangents[idx];
             const nx = -tan.y;
             const ny = tan.x;
-            // 轻微漂浮，不是沿弧推进
             const floatX = Math.sin(this._phase * 1.1 + d.twinkle) * 5;
             const floatY = Math.cos(this._phase * 0.9 + d.twinkle * 0.7) * 6;
             const x = p.x + nx * d.side * d.dist + floatX;
@@ -371,11 +395,14 @@ export class BattleTargetArcFx extends Component {
     /** 额外高亮碎光：更明显的魔法感 */
     private drawTwinkleSparks(g: Graphics): void {
         g.clear();
+        if (!this._budget.drawSparks) {
+            return;
+        }
         const lock = this._state === 'lock';
-        const n = this._samples.length - 1;
-        // 固定若干“爆发点”，闪烁开关，不沿弧滚动
-        for (let i = 0; i < 12; i++) {
-            const t = (0.08 + i * 0.075 + Math.sin(i * 1.7) * 0.02) % 1;
+        const n = this._sampleCount - 1;
+        const burstN = this._budget.sparkBurst;
+        for (let i = 0; i < burstN; i++) {
+            const t = (0.05 + i * (0.9 / Math.max(1, burstN)) + Math.sin(i * 1.7) * 0.02) % 1;
             const burst = 0.5 + 0.5 * Math.sin(this._phase * 2.8 + i * 1.9);
             if (burst < 0.55) {
                 continue;
@@ -389,37 +416,35 @@ export class BattleTargetArcFx extends Component {
             const side = (i % 2 === 0 ? 1 : -1);
             const x = p.x + nx * side * (8 + (i % 4) * 6);
             const y = p.y + ny * side * (8 + (i % 4) * 6);
-            this.fairyColor(t, i / 12, this._cOut, 255 * tw);
+            this.fairyColor(t, i / burstN, this._cOut, 255 * tw);
             this.drawStarBurst(g, x, y, (lock ? 11 : 9) * tw, i + this._phase, this._cOut, tw);
-            g.fillColor = new Color(255, 255, 255, Math.floor(235 * tw));
-            // 中心用极小菱形，避免“圆球”
-            this.drawTinyStar(g, x, y, 2.0 * tw, 0, new Color(255, 255, 255, Math.floor(250 * tw)), tw);
+            this._cOut.set(255, 255, 255, Math.floor(250 * tw));
+            this.drawTinyStar(g, x, y, 2.0 * tw, 0, this._cOut, tw);
         }
     }
 
     private drawFairyTip(g: Graphics): void {
         g.clear();
-        const p = this._samples[this._samples.length - 1];
+        const p = this._samples[this._sampleCount - 1];
         const lock = this._state === 'lock';
         const breathe = 1 + Math.sin(this._pulse * 1.5) * 0.16;
+        const tipLayers = this._budget.tipLayers;
 
-        // 不规则雾团叠层
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < tipLayers; i++) {
             const ang = this._phase * 0.6 + i * 1.1;
             const ox = Math.cos(ang) * (6 + i * 3);
             const oy = Math.sin(ang * 1.3) * (5 + i * 2.5);
-            this.fairyColor(1, i / 5, this._cOut, lock ? 95 - i * 10 : 80 - i * 9);
+            this.fairyColor(1, i / tipLayers, this._cOut, lock ? 95 - i * 8 : 80 - i * 7);
             this.fillSoftBlob(
                 g,
                 p.x + ox,
                 p.y + oy,
-                (32 - i * 4) * breathe * (lock ? 1.2 : 1),
-                (18 - i * 2) * breathe,
+                (32 - i * 3) * breathe * (lock ? 1.2 : 1),
+                (18 - i * 1.5) * breathe,
                 ang,
             );
         }
 
-        // 多层星芒（不是同心圆）
         const arms = lock ? 6 : 5;
         for (let layer = 0; layer < 2; layer++) {
             const arm = (lock ? 42 : 32) * breathe * (1 - layer * 0.25);
@@ -436,13 +461,12 @@ export class BattleTargetArcFx extends Component {
             }
         }
 
-        // 中心碎晶簇
         this.fairyColor(1, 0.9, this._cOut, 230);
         this.drawCrystal(g, p.x, p.y, lock ? 9 : 7, this._phase, this._cOut);
-        this.drawTinyStar(g, p.x, p.y, lock ? 5 : 4, this._phase * 0.5, new Color(255, 255, 255, 240), 1);
+        this._cOut.set(255, 255, 255, 240);
+        this.drawTinyStar(g, p.x, p.y, lock ? 5 : 4, this._phase * 0.5, this._cOut, 1);
 
-        // 外圈用碎点代替圆框
-        const ringN = lock ? 14 : 10;
+        const ringN = this._budget.tipRing + (lock ? 4 : 0);
         for (let i = 0; i < ringN; i++) {
             const a = this._phase * 0.8 + (i / ringN) * Math.PI * 2;
             const rr = (lock ? 30 : 24) * breathe * (0.9 + (i % 3) * 0.06);
@@ -455,7 +479,7 @@ export class BattleTargetArcFx extends Component {
     }
 
     private fillSoftBlob(g: Graphics, x: number, y: number, rx: number, ry: number, rot: number): void {
-        const steps = 10;
+        const steps = this._budget.blobSteps;
         for (let i = 0; i <= steps; i++) {
             const a = (i / steps) * Math.PI * 2;
             // 边缘起伏，打破椭圆规则感

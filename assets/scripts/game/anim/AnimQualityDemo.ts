@@ -1,7 +1,7 @@
 import { assetManager, instantiate, Node, Prefab } from 'cc';
 import { AnimQualityService } from './AnimQualityService';
 
-/** liYin / usingMagic1 演示用帧动画 prefab */
+/** liYin / usingMagic 演示用帧动画 prefab */
 const DEMO_BATTLE_ANIM_PREFAB_UUID = '22a3a57b-008a-4912-99b8-7ecf29c75e88';
 
 function loadPrefabByUuid(uuid: string): Promise<Prefab> {
@@ -37,7 +37,7 @@ export async function mountBattleDemoAnim(parent: Node): Promise<Node | null> {
         node.setPosition(0, 0, 0);
         parent.addChild(node);
         AnimQualityService.refreshAll();
-        console.log('[AnimQualityDemo] 已挂载 usingMagic1 演示动画，可在设置中切换画质');
+        console.log('[AnimQualityDemo] 已挂载 usingMagic 演示动画，可在设置中切换画质');
         return node;
     } catch (error) {
         console.warn('[AnimQualityDemo] 演示动画加载失败，画质切换将仅作用于场景中已有 anim', error);

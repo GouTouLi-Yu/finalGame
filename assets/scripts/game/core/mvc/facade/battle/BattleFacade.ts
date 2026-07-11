@@ -170,6 +170,7 @@ export class BattleFacade extends Facade {
         const res = BattlePlayService.play(this._session, { ...req, actorUnitId });
         if (res.ok) {
             this.notifyHandChanged();
+            this.notifyEnemyInfoChanged();
         }
         return res;
     }
@@ -306,6 +307,10 @@ export class BattleFacade extends Facade {
             slotIndex: pending?.slotIndex ?? null,
         };
         this.dispatch(PCEventType.EVT_BATTLE_PLAYER_TURN_CHANGED, payload);
+    }
+
+    private notifyEnemyInfoChanged(): void {
+        this.dispatch(PCEventType.EVT_BATTLE_ENEMY_INFO_CHANGED, null);
     }
 }
 

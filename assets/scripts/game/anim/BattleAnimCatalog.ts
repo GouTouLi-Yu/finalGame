@@ -13,12 +13,14 @@ export enum EBattleAnimAction {
     Idle = 'idle',
     Hurt = 'hurt',
     Die = 'die',
-    PrepRaise1 = 'prepRaise1',
-    PrepIdle1 = 'prepIdle1',
-    PrepCancel1 = 'prepCancel1',
-    PrepRaise2 = 'prepRaise2',
-    PrepIdle2 = 'prepIdle2',
-    PrepCancel2 = 'prepCancel2',
+    /** 拖牌起手 */
+    PrepStart = 'prepStart',
+    /** 拖牌循环 */
+    PrepIdle = 'prepIdle',
+    /** 收回手牌 */
+    PrepBack = 'prepBack',
+    /** 出牌成功施法演出（原 other） */
+    UsingMagic = 'usingMagic',
 }
 
 /** 资源冷热：常驻 / 半热预取 / 冷按需 */
@@ -44,12 +46,10 @@ export class BattleAnimCatalog {
         EBattleAnimAction.Idle,
         EBattleAnimAction.Hurt,
         EBattleAnimAction.Die,
-        EBattleAnimAction.PrepRaise1,
-        EBattleAnimAction.PrepIdle1,
-        EBattleAnimAction.PrepCancel1,
-        EBattleAnimAction.PrepRaise2,
-        EBattleAnimAction.PrepIdle2,
-        EBattleAnimAction.PrepCancel2,
+        EBattleAnimAction.PrepStart,
+        EBattleAnimAction.PrepIdle,
+        EBattleAnimAction.PrepBack,
+        EBattleAnimAction.UsingMagic,
     ];
 
     /** 开战必载、常驻 */
@@ -63,14 +63,20 @@ export class BattleAnimCatalog {
         EBattleAnimAction.Die,
     ];
 
-    /** 预备施法链：半热 */
+    /** 预备施法链 + 出牌演出：半热 */
     static readonly WARM_ACTIONS: readonly EBattleAnimAction[] = [
-        EBattleAnimAction.PrepRaise1,
-        EBattleAnimAction.PrepIdle1,
-        EBattleAnimAction.PrepCancel1,
-        EBattleAnimAction.PrepRaise2,
-        EBattleAnimAction.PrepIdle2,
-        EBattleAnimAction.PrepCancel2,
+        EBattleAnimAction.PrepStart,
+        EBattleAnimAction.PrepIdle,
+        EBattleAnimAction.PrepBack,
+        EBattleAnimAction.UsingMagic,
+    ];
+
+    /** 友方开战预载的半热动作 */
+    static readonly ALLY_WARM_PRELOAD_ACTIONS: readonly EBattleAnimAction[] = [
+        EBattleAnimAction.PrepStart,
+        EBattleAnimAction.PrepIdle,
+        EBattleAnimAction.PrepBack,
+        EBattleAnimAction.UsingMagic,
     ];
 
     static heatOf(action: EBattleAnimAction): EBattleAnimHeat {
@@ -95,21 +101,12 @@ export class BattleAnimCatalog {
         return `${rootType}/${animPath}/battle/${action}/anim`;
     }
 
-    /** 对敌预备三连 */
-    static prepActionsForEnemy(): readonly EBattleAnimAction[] {
+    /** 预备链：起手 → 循环 → 收回 */
+    static prepActions(): readonly EBattleAnimAction[] {
         return [
-            EBattleAnimAction.PrepRaise1,
-            EBattleAnimAction.PrepIdle1,
-            EBattleAnimAction.PrepCancel1,
-        ];
-    }
-
-    /** 对己预备三连 */
-    static prepActionsForAlly(): readonly EBattleAnimAction[] {
-        return [
-            EBattleAnimAction.PrepRaise2,
-            EBattleAnimAction.PrepIdle2,
-            EBattleAnimAction.PrepCancel2,
+            EBattleAnimAction.PrepStart,
+            EBattleAnimAction.PrepIdle,
+            EBattleAnimAction.PrepBack,
         ];
     }
 }

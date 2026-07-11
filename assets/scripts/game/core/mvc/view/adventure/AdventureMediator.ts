@@ -77,7 +77,7 @@ export class AdventureMediator extends AreaViewMediator {
     }
 
     /**
-     * 仅当当前事件是战斗时：后台预载 idle/hurt + 预实例化 BattleView（秒进）。
+     * 仅当当前事件是战斗时：后台预载 idle/hurt + 友方 prep/other + 预实例化 BattleView。
      * 测试阶段 {@link resolveCurrentEventType} 固定返回 Battle。
      */
     private tryPreloadForCurrentEvent(): void {
@@ -88,9 +88,13 @@ export class AdventureMediator extends AreaViewMediator {
         }
         const armyId = this.resolveBattleArmyId();
         const units = this.collectBattleAnimUnits(armyId);
-        BattleAnimLoadScheduler.enqueueHotForUnits(units, 200);
+        BattleAnimLoadScheduler.enqueueBattleAnimsForUnits(units, 200);
         void UIManager.prewarmView(AdventureMediator.BATTLE_VIEW_ID);
-        console.log(`[Adventure] 战斗事件：预载热动作 ${units.length} 人 + 预实例化 BattleView`);
+        const allyCount = units.filter((u) => u.rootType === 'character').length;
+        console.log(
+            `[Adventure] 战斗事件：预载热动作 ${units.length} 人`
+            + ` + 友方预备/出牌 ${allyCount} 人 + 预实例化 BattleView`,
+        );
     }
 
     /**
@@ -113,7 +117,10 @@ export class AdventureMediator extends AreaViewMediator {
 
         this.ensureDevDeploy();
         const armyId = this.resolveBattleArmyId();
-        BattleAnimLoadScheduler.enqueueHotForUnits(this.collectBattleAnimUnits(armyId), 300);
+        const units = this.collectBattleAnimUnits(armyId);
+        // 进战前尽量等 idle/hurt + prep/other 入缓存，避免拖牌时异步加载被 cancel
+        BattleAnimLoadScheduler.enqueueBattleAnimsForUnits(units, 300);
+        await BattleAnimLoadScheduler.waitIdle(8000);
 
         // 若预热尚未完成，这里会等到实例就绪（通常进冒险后已好）
         await UIManager.prewarmView(AdventureMediator.BATTLE_VIEW_ID);

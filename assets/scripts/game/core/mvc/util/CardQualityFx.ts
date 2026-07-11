@@ -139,7 +139,11 @@ export class CardQualityFx extends Component {
         const q = CardUtil.clampQuality(quality);
         if (q <= 1) {
             const existing = cardNode.getChildByName(FX_NAME);
-            existing?.destroy();
+            if (existing != null) {
+                // 先摘树再销毁，避免同帧 UI 兄弟排序读到空 _uiProps
+                existing.removeFromParent();
+                existing.destroy();
+            }
             return;
         }
         this.ensure(cardNode).setQuality(q);
@@ -249,7 +253,12 @@ export class CardQualityFx extends Component {
     private rebuildGfx(mode: TFxBuild): void {
         this.clearAll();
         for (let i = this.node.children.length - 1; i >= 0; i--) {
-            this.node.children[i].destroy();
+            const child = this.node.children[i];
+            if (child == null) {
+                continue;
+            }
+            child.removeFromParent();
+            child.destroy();
         }
         this._gAura = null;
         this._gFoil = null;

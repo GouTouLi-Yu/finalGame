@@ -39,6 +39,9 @@ export const PCEventType = {
     /** 战斗玩家可操作回合变更；payload: { unitId: string | null, slotIndex: number | null } */
     EVT_BATTLE_PLAYER_TURN_CHANGED: EventTypeUtil.id('EVT_BATTLE_PLAYER_TURN_CHANGED'),
 
+    /** 敌人头顶信息变更（HP/脆弱/Buff/元素印记）；BattleView 监听刷新 */
+    EVT_BATTLE_ENEMY_INFO_CHANGED: EventTypeUtil.id('EVT_BATTLE_ENEMY_INFO_CHANGED'),
+
     /** 动画画质切换；payload: { level: AnimQualityLevel } */
     EVT_ANIM_QUALITY_CHANGED: EventTypeUtil.id('EVT_ANIM_QUALITY_CHANGED'),
 };

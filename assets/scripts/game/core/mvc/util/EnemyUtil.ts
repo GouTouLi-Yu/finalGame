@@ -25,6 +25,24 @@ export class EnemyUtil {
         return this.getCfg(id)?.speed ?? 0;
     }
 
+    /** 最大生命（EnemyConfig.hp） */
+    static getHp(id: string): number {
+        const n = Number(this.getCfg(id)?.hp);
+        return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+
+    /** 最大脆弱值（EnemyConfig.weak）；满条 progress=1 */
+    static getWeak(id: string): number {
+        const n = Number(this.getCfg(id)?.weak);
+        return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+
+    /** 身高（EnemyConfig.height）；头顶 UI：buffs.y = height + touchLayerPos.y */
+    static getHeight(id: string): number {
+        const n = Number(this.getCfg(id)?.height);
+        return Number.isFinite(n) ? n : 0;
+    }
+
     /** 战斗动画目录名：character|enemy/{animPath}/battle/...；unitId 可为实例 ID */
     static getAnimPath(id: string): string {
         const raw = this.getCfg(id)?.animPath;

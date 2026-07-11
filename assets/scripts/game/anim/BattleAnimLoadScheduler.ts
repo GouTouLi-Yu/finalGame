@@ -116,6 +116,33 @@ export class BattleAnimLoadScheduler {
         }
     }
 
+    /**
+     * 为友方排队半热动作：prepStart/Idle/Back + usingMagic（拖牌/出牌用）。
+     * 敌方不排队（暂无对应资源约定）。
+     */
+    static enqueueWarmForAllyUnits(units: readonly IBattleAnimUnitRef[], basePriority = 80): void {
+        for (const u of units) {
+            if (u.rootType !== 'character') {
+                continue;
+            }
+            for (const action of BattleAnimCatalog.ALLY_WARM_PRELOAD_ACTIONS) {
+                this.enqueue({
+                    rootType: u.rootType,
+                    animPath: u.animPath,
+                    action,
+                    heat: EBattleAnimHeat.Warm,
+                    priority: basePriority,
+                });
+            }
+        }
+    }
+
+    /** 热 + 友方预备/出牌一并入队 */
+    static enqueueBattleAnimsForUnits(units: readonly IBattleAnimUnitRef[], basePriority = 100): void {
+        this.enqueueHotForUnits(units, basePriority);
+        this.enqueueWarmForAllyUnits(units, basePriority - 20);
+    }
+
     /** 等待队列清空（含进行中）；超时不抛错 */
     static async waitIdle(timeoutMs = 15000): Promise<void> {
         const start = Date.now();
@@ -130,13 +157,18 @@ export class BattleAnimLoadScheduler {
         }
     }
 
-    /** 预载热动作并等待（冒险点进战用） */
-    static async preloadHot(units: readonly IBattleAnimUnitRef[]): Promise<void> {
+    /** 预载热动作 + 友方预备/出牌并等待 */
+    static async preloadBattleAnims(units: readonly IBattleAnimUnitRef[]): Promise<void> {
         if (units.length === 0) {
             return;
         }
-        this.enqueueHotForUnits(units, 200);
+        this.enqueueBattleAnimsForUnits(units, 200);
         await this.waitIdle();
+    }
+
+    /** @deprecated 请用 {@link preloadBattleAnims} */
+    static async preloadHot(units: readonly IBattleAnimUnitRef[]): Promise<void> {
+        await this.preloadBattleAnims(units);
     }
 
     static clearQueue(): void {

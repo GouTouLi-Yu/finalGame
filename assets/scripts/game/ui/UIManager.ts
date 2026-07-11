@@ -142,12 +142,16 @@ export class UIManager {
     /**
      * 切换区域界面前清空内容区：先 dismiss（派发关闭事件），再销毁节点，
      * 这样会触发 MediatorMap 里 NODE_DESTROYED → onRemove（对齐 k 里 removeView / cleanMediator + destroy 的效果）。
+     * @param keep 保留不销毁的节点（例如即将显示的预热界面）
      */
-    private static clearAreaLayer() {
+    private static clearAreaLayer(keep?: Node | null) {
         if (!this._areaLayer || !this._areaLayer.isValid) return;
         const children = this._areaLayer.children.slice();
         for (const child of children) {
             if (!child || !child.isValid) continue;
+            if (keep != null && child === keep) {
+                continue;
+            }
             // 预热隐藏节点留给秒进，不在此销毁
             if (!child.active && this.isPrewarmedNode(child)) {
                 continue;
@@ -160,7 +164,11 @@ export class UIManager {
             } catch (e) {
                 console.warn('[UIManager] dismiss area view failed', e);
             }
-            child.destroy();
+            try {
+                child.destroy();
+            } catch (e) {
+                console.warn('[UIManager] destroy area view failed', e);
+            }
         }
     }
 
@@ -363,13 +371,15 @@ export class UIManager {
         mm.mapView(resolved.viewId, resolved.mediatorKey, true, true);
 
         // 秒进：使用预实例化节点（跳过再次 load/instantiate）
+        // 必须先从 prewarm 表取出所有权，再 clearAreaLayer；
+        // 否则旧界面 onRemove → discardPrewarmedView 会把即将打开的节点毁掉。
         const prewarmed = this._prewarmedViews.get(viewId);
         if (prewarmed?.isValid && resolved.kind === 'area' && overrideParent == null) {
-            // 先清旧界面（此时仍在 prewarm 表里，clear 会跳过它），再取出激活
-            if (this.shouldReplaceAreaLayer(viewId, options)) {
-                this.clearAreaLayer();
-            }
             this._prewarmedViews.delete(viewId);
+            if (this.shouldReplaceAreaLayer(viewId, options)) {
+                // 必须传入 keep：已从 prewarm 表删除后，否则会被当成普通节点毁掉
+                this.clearAreaLayer(prewarmed);
+            }
             if (!prewarmed.isValid) {
                 console.warn(`[UIManager] 预热节点在清理后失效: ${viewId}`);
             } else {
