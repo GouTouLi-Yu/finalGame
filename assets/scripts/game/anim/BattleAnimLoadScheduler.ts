@@ -117,15 +117,15 @@ export class BattleAnimLoadScheduler {
     }
 
     /**
-     * 为友方排队半热动作：prepStart/Idle/Back + usingMagic（拖牌/出牌用）。
-     * 敌方不排队（暂无对应资源约定）。
+     * 为友方排队半热动作：prepStart/Idle/Back + usingMagic。
+     * 冒险遇战事件时与 hot 一并预载；敌方不排队。
      */
     static enqueueWarmForAllyUnits(units: readonly IBattleAnimUnitRef[], basePriority = 80): void {
         for (const u of units) {
             if (u.rootType !== 'character') {
                 continue;
             }
-            for (const action of BattleAnimCatalog.ALLY_WARM_PRELOAD_ACTIONS) {
+            for (const action of BattleAnimCatalog.WARM_ACTIONS) {
                 this.enqueue({
                     rootType: u.rootType,
                     animPath: u.animPath,

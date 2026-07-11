@@ -77,7 +77,7 @@ export class AdventureMediator extends AreaViewMediator {
     }
 
     /**
-     * 仅当当前事件是战斗时：后台预载 idle/hurt + 友方 prep/other + 预实例化 BattleView。
+     * 仅当当前事件是战斗时：后台预载全部战斗动画（含 prepBack/usingMagic）+ 预实例化 BattleView。
      * 测试阶段 {@link resolveCurrentEventType} 固定返回 Battle。
      */
     private tryPreloadForCurrentEvent(): void {
@@ -93,7 +93,7 @@ export class AdventureMediator extends AreaViewMediator {
         const allyCount = units.filter((u) => u.rootType === 'character').length;
         console.log(
             `[Adventure] 战斗事件：预载热动作 ${units.length} 人`
-            + ` + 友方预备/出牌 ${allyCount} 人 + 预实例化 BattleView`,
+            + ` + 友方拖牌全套 ${allyCount} 人 + 预实例化 BattleView`,
         );
     }
 
@@ -118,7 +118,7 @@ export class AdventureMediator extends AreaViewMediator {
         this.ensureDevDeploy();
         const armyId = this.resolveBattleArmyId();
         const units = this.collectBattleAnimUnits(armyId);
-        // 进战前尽量等 idle/hurt + prep/other 入缓存，避免拖牌时异步加载被 cancel
+        // 遇战事件阶段应已预载完；此处再等队列清空（已好则几乎无等待）
         BattleAnimLoadScheduler.enqueueBattleAnimsForUnits(units, 300);
         await BattleAnimLoadScheduler.waitIdle(8000);
 

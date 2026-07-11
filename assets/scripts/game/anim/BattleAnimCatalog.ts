@@ -63,16 +63,11 @@ export class BattleAnimCatalog {
         EBattleAnimAction.Die,
     ];
 
-    /** 预备施法链 + 出牌演出：半热 */
+    /**
+     * 友方半热：拖牌全链路（冒险遇战事件时预载完）。
+     * 含 prepStart/Idle/Back + usingMagic。
+     */
     static readonly WARM_ACTIONS: readonly EBattleAnimAction[] = [
-        EBattleAnimAction.PrepStart,
-        EBattleAnimAction.PrepIdle,
-        EBattleAnimAction.PrepBack,
-        EBattleAnimAction.UsingMagic,
-    ];
-
-    /** 友方开战预载的半热动作 */
-    static readonly ALLY_WARM_PRELOAD_ACTIONS: readonly EBattleAnimAction[] = [
         EBattleAnimAction.PrepStart,
         EBattleAnimAction.PrepIdle,
         EBattleAnimAction.PrepBack,

@@ -74,11 +74,7 @@ export class BattleMediator extends AreaViewMediator {
             const actorId = BattleFacade.getInstance().currentActorUnitId;
             const slot = actorId != null ? this._unitBinder.getSlotByUnitId(actorId) : null;
             if (actorId != null && slot != null && this._drag.dragging) {
-                BattleUnitAnimHooks.playPrepBack(
-                    actorId,
-                    slot.slotIndex,
-                    this._drag.chooseTarget !== EChooseTarget.Self,
-                );
+                BattleUnitAnimHooks.playPrepBack(actorId);
             }
             this.cancelDragVisual(false);
         }
@@ -159,7 +155,7 @@ export class BattleMediator extends AreaViewMediator {
         this.refreshHandFromBattle();
         this.refreshSeqBar();
         this.refreshEnemyInfo();
-        // 先预载 prep/other，再挂 idle，保证拖牌/收回能同步切到动画
+        // 资源应已在冒险遇战事件预载；此处挂节点 + idle（缓存命中则很快）
         void (async () => {
             await this._animPlayer.preloadAllyBattleAnims();
             await this._animPlayer.playIdleAll();
@@ -238,6 +234,39 @@ export class BattleMediator extends AreaViewMediator {
         }
         if (code === KeyCode.DIGIT_0) {
             facade.cheatAddHandCard('card_001', 10);
+            return;
+        }
+        // Q：抽牌堆顶 +1 随机；W：摸 1 张；E：抽牌堆顶 +5 card_001；R：回收弃牌；T：打印牌堆；M：魔力=99
+        if (code === KeyCode.KEY_Q) {
+            const n = facade.cheatAddRandomDrawCard(1);
+            console.log(`[手牌秘籍] Q 抽牌堆+随机 ${n} 张`);
+            facade.cheatPrintDeck();
+            return;
+        }
+        if (code === KeyCode.KEY_W) {
+            const n = facade.cheatDrawCards(1);
+            console.log(`[手牌秘籍] W 摸牌 ${n} 张`);
+            return;
+        }
+        if (code === KeyCode.KEY_E) {
+            const n = facade.cheatAddDrawCard('card_001', 5);
+            console.log(`[手牌秘籍] E 抽牌堆+card_001 x${n}`);
+            facade.cheatPrintDeck();
+            return;
+        }
+        if (code === KeyCode.KEY_R) {
+            const n = facade.cheatRecycleDiscard();
+            console.log(`[手牌秘籍] R 回收弃牌 ${n} 张`);
+            facade.cheatPrintDeck();
+            return;
+        }
+        if (code === KeyCode.KEY_T) {
+            facade.cheatPrintDeck();
+            return;
+        }
+        if (code === KeyCode.KEY_M) {
+            const mana = facade.cheatSetMana(99);
+            console.log(`[手牌秘籍] M 魔力=${mana}`);
             return;
         }
         // 空格：推进跑条 / 结束当前玩家回合后再推进
@@ -455,16 +484,7 @@ export class BattleMediator extends AreaViewMediator {
             console.warn('[战场动画] 拖牌开始但无当前行动者，跳过预备动画');
             return;
         }
-        // 不依赖 touchLayer 槽位：Player 只需要 unitId
-        const unit = BattleFacade.getInstance().fieldModel?.getUnit(actorId);
-        const slotIndex = unit?.slotIndex
-            ?? this._unitBinder.getSlotByUnitId(actorId)?.slotIndex
-            ?? 0;
-        BattleUnitAnimHooks.playPrepStartChain(
-            actorId,
-            slotIndex,
-            drag.chooseTarget !== EChooseTarget.Self,
-        );
+        BattleUnitAnimHooks.playPrepStartChain(actorId);
     }
 
     private updateAimVisual(drag: IHandDragState, uiX: number, uiY: number): void {
@@ -474,7 +494,6 @@ export class BattleMediator extends AreaViewMediator {
     private resolveDragPlay(drag: IHandDragState, uiX: number, uiY: number): void {
         const facade = BattleFacade.getInstance();
         const actorId = facade.currentActorUnitId;
-        const actorSlot = actorId != null ? this._unitBinder.getSlotByUnitId(actorId) : null;
         const inHandLayer = BattleUnitSlotBinder.isPointInHandLayer(this._handLayerNode, uiX, uiY);
         const needTarget = drag.chooseTarget !== EChooseTarget.None;
         const targetTypeLabel = this.chooseTargetLabel(drag.chooseTarget);
@@ -511,7 +530,7 @@ export class BattleMediator extends AreaViewMediator {
         if (needTarget) {
             const hit = this._unitBinder.hitTest(uiX, uiY, drag.chooseTarget);
             if (hit != null) {
-                this.tryPlayCard(drag, actorId, actorSlot?.slotIndex ?? 0, hit.unitId, drag.chooseTarget, underFingerText);
+                this.tryPlayCard(drag, actorId, hit.unitId, drag.chooseTarget, underFingerText);
                 return;
             }
             // 未命中目标：在手牌区 → 明确收回；在手牌区外 → 也收回（选目标失败）
@@ -547,13 +566,12 @@ export class BattleMediator extends AreaViewMediator {
             return;
         }
 
-        this.tryPlayCard(drag, actorId, actorSlot?.slotIndex ?? 0, null, EChooseTarget.None, underFingerText);
+        this.tryPlayCard(drag, actorId, null, EChooseTarget.None, underFingerText);
     }
 
     private tryPlayCard(
         drag: IHandDragState,
         actorId: string,
-        actorSlotIndex: number,
         targetId: string | null,
         chooseTarget: EChooseTarget,
         underFingerText: string,
@@ -561,7 +579,6 @@ export class BattleMediator extends AreaViewMediator {
         const facade = BattleFacade.getInstance();
         const needTarget = chooseTarget !== EChooseTarget.None;
         const targetTypeLabel = this.chooseTargetLabel(chooseTarget);
-        const towardEnemy = chooseTarget !== EChooseTarget.Self;
         const wasDragging = drag.dragging;
         // 先清拖拽，避免 opPlayCard 触发手牌刷新时误播 prepBack
         this.cancelDragVisual(true);
@@ -584,7 +601,7 @@ export class BattleMediator extends AreaViewMediator {
                 underFingerText,
             });
             if (wasDragging && actorId) {
-                BattleUnitAnimHooks.playPrepBack(actorId, actorSlotIndex, towardEnemy);
+                BattleUnitAnimHooks.playPrepBack(actorId);
             }
             this.refreshHandFromBattle();
             return;
@@ -603,7 +620,7 @@ export class BattleMediator extends AreaViewMediator {
         });
 
         if (wasDragging) {
-            BattleUnitAnimHooks.playUsingMagic(actorId, actorSlotIndex);
+            BattleUnitAnimHooks.playUsingMagic(actorId);
         }
         // 手牌刷新由 EVT_BATTLE_HAND_CHANGED 触发
     }
@@ -611,15 +628,7 @@ export class BattleMediator extends AreaViewMediator {
     private returnCardToHand(drag: IHandDragState): void {
         const actorId = BattleFacade.getInstance().currentActorUnitId;
         if (actorId != null && drag.dragging) {
-            const unit = BattleFacade.getInstance().fieldModel?.getUnit(actorId);
-            const slotIndex = unit?.slotIndex
-                ?? this._unitBinder.getSlotByUnitId(actorId)?.slotIndex
-                ?? 0;
-            BattleUnitAnimHooks.playPrepBack(
-                actorId,
-                slotIndex,
-                drag.chooseTarget !== EChooseTarget.Self,
-            );
+            BattleUnitAnimHooks.playPrepBack(actorId);
         }
         this.cancelDragVisual(false);
         this.refreshHandFromBattle();

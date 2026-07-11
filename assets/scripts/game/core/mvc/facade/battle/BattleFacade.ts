@@ -7,6 +7,7 @@ import { IBattlePlayerTurnChangedPayload } from 'db://assets/scripts/game/core/m
 import { BattleSession } from 'db://assets/scripts/game/core/mvc/model/battle/BattleSession';
 import { IBeginBattleOptions, IBattlePlayCardRequest, IBattlePlayCardResult } from 'db://assets/scripts/game/core/mvc/model/battle/BattleTypes';
 import { Card } from 'db://assets/scripts/game/core/mvc/model/card/Card';
+import { EDeckPile } from 'db://assets/scripts/game/core/mvc/model/battle/DeckPile';
 import { IAdventureBattlePort } from 'db://assets/scripts/game/core/mvc/port/IAdventureBattlePort';
 import { DevAllCardUnlockProvider, ICardUnlockProvider } from 'db://assets/scripts/game/core/mvc/port/ICardUnlockProvider';
 import { PlayerAdventureBattlePort } from 'db://assets/scripts/game/core/mvc/port/PlayerAdventureBattlePort';
@@ -269,6 +270,149 @@ export class BattleFacade extends Facade {
             this.notifyHandChanged();
         }
         return removed.length;
+    }
+
+    /** 秘籍：往抽牌堆顶塞指定牌 */
+    cheatAddDrawCard(cardId: string, count: number): number {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null) {
+            return 0;
+        }
+        if (!CardUtil.isValidCardId(cardId) || count <= 0) {
+            return 0;
+        }
+        const deck = this._session.deck;
+        let added = 0;
+        for (let i = 0; i < count; i++) {
+            deck.putOnTopOfLibrary(new Card(cardId, 1));
+            added++;
+        }
+        return added;
+    }
+
+    /** 秘籍：往抽牌堆顶塞随机已解锁牌 */
+    cheatAddRandomDrawCard(count: number): number {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null || count <= 0) {
+            return 0;
+        }
+        const unlocked = this._cardUnlock.getUnlockedCardIds();
+        if (unlocked.length === 0) {
+            return 0;
+        }
+        const deck = this._session.deck;
+        let added = 0;
+        for (let i = 0; i < count; i++) {
+            const pick = unlocked[Math.floor(Math.random() * unlocked.length)];
+            if (pick == null) {
+                break;
+            }
+            deck.putOnTopOfLibrary(new Card(pick, 1));
+            added++;
+        }
+        return added;
+    }
+
+    /** 秘籍：抽牌堆顶摸 n 张到手牌（空则尝试回收弃牌堆） */
+    cheatDrawCards(count: number): number {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null || count <= 0) {
+            return 0;
+        }
+        const drawn = this._session.deck.drawToHand(count);
+        if (drawn > 0) {
+            this.notifyHandChanged();
+        }
+        return drawn;
+    }
+
+    /** 秘籍：抽牌堆全部弃入弃牌堆 */
+    cheatClearDrawPile(): number {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null) {
+            return 0;
+        }
+        const deck = this._session.deck;
+        let moved = 0;
+        while (deck.library.length > 0) {
+            const top = deck.peekLibraryTop();
+            if (top == null) {
+                break;
+            }
+            if (!deck.moveCardBetweenPiles(EDeckPile.Library, EDeckPile.Discard, top)) {
+                break;
+            }
+            moved++;
+        }
+        return moved;
+    }
+
+    /** 秘籍：往弃牌堆顶塞指定牌 */
+    cheatAddDiscardCard(cardId: string, count: number): number {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null) {
+            return 0;
+        }
+        if (!CardUtil.isValidCardId(cardId) || count <= 0) {
+            return 0;
+        }
+        const deck = this._session.deck;
+        let added = 0;
+        for (let i = 0; i < count; i++) {
+            deck.putOnTopOfDiscard(new Card(cardId, 1));
+            added++;
+        }
+        return added;
+    }
+
+    /** 秘籍：弃牌堆整堆回收进抽牌堆（不洗牌） */
+    cheatRecycleDiscard(): number {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null) {
+            return 0;
+        }
+        const n = this._session.deck.discard.length;
+        this._session.deck.recycleDiscardToLibrary();
+        return n;
+    }
+
+    /** 秘籍：洗抽牌堆 */
+    cheatShuffleDrawPile(): number {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null) {
+            return 0;
+        }
+        const n = this._session.deck.library.length;
+        this._session.deck.shuffleLibrary();
+        return n;
+    }
+
+    /** 秘籍：设置魔力 */
+    cheatSetMana(value: number): number {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null) {
+            return 0;
+        }
+        this._session.setMana(value);
+        return this._session.mana;
+    }
+
+    /** 秘籍：增减魔力 */
+    cheatAddMana(delta: number): number {
+        if (!this.opEnsureDevHandTestBattle() || this._session == null) {
+            return 0;
+        }
+        this._session.addMana(delta);
+        return this._session.mana;
+    }
+
+    /** 秘籍：打印牌堆张数 */
+    cheatPrintDeck(): string {
+        const deck = this._session?.deck;
+        if (deck == null) {
+            const msg = '[GM] 未在战斗中';
+            console.log(msg);
+            return msg;
+        }
+        const msg =
+            `[GM] 牌堆 | 抽=${deck.library.length} 手=${deck.hand.length}`
+            + ` 弃=${deck.discard.length} 耗=${deck.exhaust.length}`
+            + ` | 魔力=${this._session?.mana ?? 0}`
+            + ` | 行动者=${this.currentActorUnitId ?? '无'}`;
+        console.log(msg);
+        return msg;
     }
 
     /** 失控/混乱：单位回合内自动随机打 n 张 */

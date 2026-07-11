@@ -44,4 +44,16 @@ export function initGMCheatActions(): void {
     GMCheatActionRegistry.register('delRandCardByPos', (args) => BattleGMCheatService.delRandCardByPos(args));
     GMCheatActionRegistry.register('delAllRandCard', () => BattleGMCheatService.delAllRandCard());
     GMCheatActionRegistry.register('delRndCardById', (args) => BattleGMCheatService.delRndCardById(args));
+
+    /** 战斗抽牌堆 / 摸牌 / 弃牌 / 魔力 */
+    GMCheatActionRegistry.register('addDrawCard', (args) => BattleGMCheatService.addDrawCard(args));
+    GMCheatActionRegistry.register('addRandDrawCard', (args) => BattleGMCheatService.addRandDrawCard(args));
+    GMCheatActionRegistry.register('clearDrawPile', () => BattleGMCheatService.clearDrawPile());
+    GMCheatActionRegistry.register('drawCards', (args) => BattleGMCheatService.drawCards(args));
+    GMCheatActionRegistry.register('addDiscardCard', (args) => BattleGMCheatService.addDiscardCard(args));
+    GMCheatActionRegistry.register('recycleDiscard', () => BattleGMCheatService.recycleDiscard());
+    GMCheatActionRegistry.register('shuffleDraw', () => BattleGMCheatService.shuffleDraw());
+    GMCheatActionRegistry.register('setMana', (args) => BattleGMCheatService.setMana(args));
+    GMCheatActionRegistry.register('addMana', (args) => BattleGMCheatService.addMana(args));
+    GMCheatActionRegistry.register('printDeck', () => BattleGMCheatService.printDeck());
 }
