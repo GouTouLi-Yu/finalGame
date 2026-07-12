@@ -1,68 +1,73 @@
 /**
- * 配置文件管理模块
+ * 配置文件管理
+ * - settings.json：团队默认 Excel 路径（可提交）
+ * - settings.local.json：本机覆盖路径（gitignore）
  */
 const fs = require('fs');
 const path = require('path');
 const { DEFAULT_EXCEL_RELATIVE, normalizeStoredPath } = require('./pathUtil');
 
+function readJson(filePath) {
+    try {
+        if (!fs.existsSync(filePath)) {
+            return null;
+        }
+        const parsed = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (error) {
+        console.error('[export-excel] 读取配置失败:', filePath, error);
+        return null;
+    }
+}
+
+function writeJson(filePath, data) {
+    fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`, 'utf-8');
+}
+
 class ConfigManager {
     constructor() {
         this.configPath = path.join(__dirname, '../settings.json');
+        this.localConfigPath = path.join(__dirname, '../settings.local.json');
     }
 
     /**
-     * 读取配置（excelLocation 始终为相对项目根目录的路径）
+     * 读取配置（excelLocation 为相对项目根目录的路径）
+     * 优先级：settings.local.json > settings.json > 代码默认
      */
     readConfig() {
-        try {
-            if (fs.existsSync(this.configPath)) {
-                const content = fs.readFileSync(this.configPath, 'utf-8');
-                const parsed = JSON.parse(content);
-                if (parsed && typeof parsed === 'object') {
-                    parsed.excelLocation = normalizeStoredPath(parsed.excelLocation);
-                    return parsed;
-                }
-            }
-        } catch (error) {
-            console.error('读取配置文件失败:', error);
-        }
-        return {
-            excelLocation: DEFAULT_EXCEL_RELATIVE,
-        };
+        const shared = readJson(this.configPath) || {};
+        const local = readJson(this.localConfigPath) || {};
+        const excelLocation = normalizeStoredPath(
+            local.excelLocation || shared.excelLocation || DEFAULT_EXCEL_RELATIVE,
+        );
+        return { excelLocation };
     }
 
     /**
-     * 保存配置
+     * 保存本机覆盖（不改团队 settings.json）
      */
     saveConfig(config) {
         try {
-            const normalized = {
-                ...config,
-                excelLocation: normalizeStoredPath(config.excelLocation),
-            };
-            fs.writeFileSync(this.configPath, JSON.stringify(normalized, null, 2), 'utf-8');
+            const excelLocation = normalizeStoredPath(
+                (config && config.excelLocation) || DEFAULT_EXCEL_RELATIVE,
+            );
+            writeJson(this.localConfigPath, { excelLocation });
             return true;
         } catch (error) {
-            console.error('保存配置文件失败:', error);
+            console.error('[export-excel] 保存本机配置失败:', error);
             return false;
         }
     }
 
-    /**
-     * 获取 Excel 相对路径
-     */
     getExcelLocation() {
         const config = this.readConfig();
         return config.excelLocation || DEFAULT_EXCEL_RELATIVE;
     }
 
-    /**
-     * 设置 Excel 路径（可传绝对或相对，保存时统一转为相对路径）
-     */
     setExcelLocation(location) {
-        const config = this.readConfig();
-        config.excelLocation = normalizeStoredPath(location);
-        return this.saveConfig(config);
+        return this.saveConfig({
+            excelLocation: normalizeStoredPath(location),
+        });
     }
 }
 

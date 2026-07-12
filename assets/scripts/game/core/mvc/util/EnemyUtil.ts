@@ -11,7 +11,7 @@ export interface IEnemyTouchLayer {
 }
 
 export class EnemyUtil {
-    /** 实例 ID（Enemy_1#0）→ 配置 ID（Enemy_1） */
+    /** 实例 ID（enemy_1#0）→ 配置 ID（enemy_1） */
     static toConfigId(unitId: string): string {
         const i = unitId.lastIndexOf('#');
         return i >= 0 ? unitId.slice(0, i) : unitId;

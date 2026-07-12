@@ -19,6 +19,10 @@ assets/config/
 # Excel 导表插件本地缓存（路径与 hash 因机器而异，不提交）
 extensions/export-excel/cache/fileCache.json
 
+# 编辑器扩展本机路径覆盖（不影响他人；团队默认在 settings.json）
+extensions/anim-tools/settings.local.json
+extensions/export-excel/settings.local.json
+
 # 依赖目录
 node_modules/
 
